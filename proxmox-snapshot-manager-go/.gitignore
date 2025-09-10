@@ -42,6 +42,12 @@ Thumbs.db
 *.yml
 !example.yaml
 !sample.yaml
+!config/proxmox-snapshot-manager.yaml  # Template file only
+
+# Never commit config files with real credentials
+proxmox-snapshot-manager.yaml
+**/proxmox-snapshot-manager.yaml
+!config/proxmox-snapshot-manager.yaml  # Allow template in config/ dir
 
 # Log files
 *.log

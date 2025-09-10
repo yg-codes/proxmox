@@ -2,6 +2,22 @@
 
 A powerful, fast, and efficient Proxmox VM snapshot management tool written in Go. This is a complete rewrite and enhancement of the original Python version, offering superior performance, concurrency, and deployment simplicity.
 
+## 📖 Table of Contents
+
+- [🚀 Key Features](#-key-features)
+- [📋 Requirements](#-requirements)
+- [🔧 Installation](#-installation)
+- [⚙️ Setup & Configuration](#️-setup--configuration)
+- [🚀 Usage](#-usage)
+- [🏗️ Architecture Comparison](#️-architecture-comparison)
+- [📊 Performance Benchmarks](#-performance-benchmarks)
+- [🛠️ Development](#️-development)
+- [🐳 Docker](#-docker)
+- [📖 Module Architecture](#-module-architecture)
+- [🔒 Security Features](#-security-features)
+- [🚨 Error Handling](#-error-handling)
+- [🤝 Migration from Python Version](#-migration-from-python-version)
+
 ## 🚀 Key Features
 
 - **Blazing Fast**: 5-10x faster than Python version with concurrent operations
@@ -45,28 +61,62 @@ sudo cp build/proxmox-snapshot-manager /usr/local/bin/
 go install github.com/yg-codes/proxmox-snapshot-manager-go/cmd@latest
 ```
 
-## ⚙️ Configuration
+## ⚙️ Setup & Configuration
 
-### Environment Variables (Recommended)
+### 🚨 Important Security Notice
+
+**Never commit real credentials to Git!** This repository contains only template files.
+
+### ⚡ Quick Setup
+
+#### Option 1: Environment Variables (Recommended)
 
 ```bash
 export PVE_HOST=your-proxmox-host.example.com
 export PVE_USER=username@pam
-export PVE_TOKEN_NAME=api-token-name
+export PVE_TOKEN_NAME=your-token-name
 export PVE_TOKEN_VALUE=your-token-value
 ```
 
-### Configuration File (Optional)
+Add to your `~/.bashrc` or `~/.zshrc` for persistence.
 
-Create `~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`:
+#### Option 2: Configuration File
+
+**Step 1: Copy Configuration Template**
+
+```bash
+# Create user config directory (safe from Git)
+mkdir -p ~/.config/proxmox-snapshot-manager
+
+# Copy template to user config
+cp config/proxmox-snapshot-manager.yaml ~/.config/proxmox-snapshot-manager/
+```
+
+**Step 2: Edit Your Configuration**
+
+```bash
+# Edit with your real credentials
+nano ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
+```
+
+Replace these placeholders:
+```yaml
+proxmox:
+  host: "your-proxmox-host.example.com"     # Your Proxmox host
+  username: "username@pam"                   # Your username
+  token_name: "your-token-name"              # Your API token name
+  token_value: "your-token-value-here"       # Your API token value
+```
+
+**Example Complete Configuration:**
 
 ```yaml
 proxmox:
-  host: "your-proxmox-host.example.com"
+  host: "pve.example.com"
   port: 8006
-  username: "user@pam"
-  token_name: "api-token-name"
-  token_value: "your-token-value"
+  username: "admin@pam"
+  token_name: "mytoken"
+  token_value: "12345678-1234-1234-1234-123456789abc"
   verify_ssl: false
 
 operations:
@@ -79,9 +129,38 @@ logging:
   format: "text"
   
 cli:
-  batch_mode: false
-  auto_confirm: false
   color_output: true
+  progress_bars: true
+```
+
+### 🎯 Configuration Priority
+
+1. **Command line**: `--config /path/to/config.yaml`
+2. **Environment variables**: `PVE_HOST`, `PVE_USER`, etc.
+3. **User config**: `~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`
+4. **Current directory**: `./proxmox-snapshot-manager.yaml`
+5. **System config**: `/etc/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`
+
+### 🔐 Security Best Practices
+
+✅ **Safe (Git ignored)**:
+- `~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`
+- Environment variables
+- Files ending with `.local.yaml`
+
+❌ **Unsafe (avoid)**:
+- Config files in the project directory
+- Hardcoded credentials in code
+- Committing real credentials to Git
+
+### 🧪 Test Your Setup
+
+```bash
+# Test connection
+./build/proxmox-snapshot-manager --help
+
+# Verbose output to see config loading
+./build/proxmox-snapshot-manager --verbose list --help
 ```
 
 ### API Token Setup
