@@ -96,7 +96,7 @@ cp config/proxmox-snapshot-manager.yaml ~/.config/proxmox-snapshot-manager/
 
 ```bash
 # Edit with your real credentials
-nano ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
+vim ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
 ```
 
 Replace these placeholders:
