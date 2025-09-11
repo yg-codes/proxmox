@@ -38,27 +38,18 @@ A powerful, fast, and efficient Proxmox VM snapshot management tool written in G
 
 ## 🔧 Installation
 
-### Option 1: Download Pre-built Binary
+### Build from Source
 
 ```bash
-# Download latest release for your platform
-curl -L https://github.com/yg-codes/proxmox-snapshot-manager-go/releases/latest/download/proxmox-snapshot-manager-linux-amd64.tar.gz | tar xz
-sudo mv proxmox-snapshot-manager-linux-amd64 /usr/local/bin/proxmox-snapshot-manager
-```
-
-### Option 2: Build from Source
-
-```bash
-git clone https://github.com/yg-codes/proxmox-snapshot-manager-go.git
+git clone <repository-url>
 cd proxmox-snapshot-manager-go
-make build
-sudo cp build/proxmox-snapshot-manager /usr/local/bin/
+go build -o build/proxmox-snapshot-manager ./cmd
 ```
 
-### Option 3: Install with Go
+### Install to System Path (Optional)
 
 ```bash
-go install github.com/yg-codes/proxmox-snapshot-manager-go/cmd@latest
+sudo install -m 755 build/proxmox-snapshot-manager /usr/local/bin/
 ```
 
 ## ⚙️ Setup & Configuration
@@ -298,66 +289,6 @@ proxmox-snapshot-manager create --vmid 7303 --prefix backup --batch -y --quiet
 | Rollback 5 VMs | 78.9s | 12.4s | 6.4x faster |
 
 *Benchmarks performed on Proxmox 7.4 cluster with 3 nodes, 100+ VMs*
-
-## 🛠️ Development
-
-### Building
-
-```bash
-# Build for current platform
-make build
-
-# Build for all platforms
-make build-all
-
-# Build and install
-make install
-```
-
-### Testing
-
-```bash
-# Run tests
-make test
-
-# Run tests with coverage
-make test-coverage
-```
-
-### Code Quality
-
-```bash
-# Format code
-make fmt
-
-# Run linting
-make lint
-
-# Run all checks
-make all
-```
-
-## 🐳 Docker
-
-### Build Docker Image
-
-```bash
-make docker-build
-```
-
-### Run in Docker
-
-```bash
-make docker-run ARGS="--help"
-
-# With environment variables
-docker run --rm -it \
-  -e PVE_HOST=your-host \
-  -e PVE_USER=user@pam \
-  -e PVE_TOKEN_NAME=token \
-  -e PVE_TOKEN_VALUE=value \
-  proxmox-snapshot-manager:latest create --vmid 100 --prefix backup --batch -y
-```
 
 ## 📖 Module Architecture
 
