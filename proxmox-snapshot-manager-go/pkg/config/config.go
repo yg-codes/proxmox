@@ -260,7 +260,7 @@ func (c *Config) IsBatchMode() bool {
 
 // IsAutoConfirm returns true if auto-confirm is enabled
 func (c *Config) IsAutoConfirm() bool {
-	return c.CLI.AutoConfirm || c.CLI.BatchMode
+	return c.CLI.AutoConfirm
 }
 
 // GetMaxConcurrentOperations returns max concurrent operations based on operation type
