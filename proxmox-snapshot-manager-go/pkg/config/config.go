@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // Config holds application configuration
@@ -87,74 +86,33 @@ var defaultConfig = Config{
 	},
 }
 
-// LoadConfig loads configuration from various sources
+// LoadConfig loads configuration from environment variables only
+// This matches the Python implementation which does not use config files
 func LoadConfig(configPath string) (*Config, error) {
-	viper.SetConfigName("proxmox-snapshot-manager")
-	viper.SetConfigType("yaml")
+	// Start with default config
+	config := defaultConfig
 
-	// Add config search paths
-	if configPath != "" {
-		viper.SetConfigFile(configPath)
-	} else {
-		viper.AddConfigPath(".")
-		viper.AddConfigPath("$HOME/.config/proxmox-snapshot-manager")
-		viper.AddConfigPath("/etc/proxmox-snapshot-manager")
+	// Load from environment variables (matching Python implementation)
+	if host := os.Getenv("PVE_HOST"); host != "" {
+		config.Proxmox.Host = host
+	}
+	if user := os.Getenv("PVE_USER"); user != "" {
+		config.Proxmox.Username = user
+	}
+	if password := os.Getenv("PVE_PASSWORD"); password != "" {
+		config.Proxmox.Password = password
+	}
+	if tokenName := os.Getenv("PVE_TOKEN_NAME"); tokenName != "" {
+		config.Proxmox.TokenName = tokenName
+	}
+	if tokenValue := os.Getenv("PVE_TOKEN_VALUE"); tokenValue != "" {
+		config.Proxmox.TokenValue = tokenValue
 	}
 
-	// Set environment variable prefix
-	viper.SetEnvPrefix("PSM")
-	viper.AutomaticEnv()
-
-	// Bind environment variables
-	viper.BindEnv("proxmox.host", "PVE_HOST")
-	viper.BindEnv("proxmox.username", "PVE_USER")
-	viper.BindEnv("proxmox.password", "PVE_PASSWORD")
-	viper.BindEnv("proxmox.token_name", "PVE_TOKEN_NAME")
-	viper.BindEnv("proxmox.token_value", "PVE_TOKEN_VALUE")
-
-	// Set defaults
-	setDefaults()
-
-	// Read config file (optional)
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("error reading config file: %w", err)
-		}
-		// Config file not found is OK, we'll use defaults + env vars
-	}
-
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("error unmarshaling config: %w", err)
-	}
+	// Note: configPath parameter is ignored but kept for backward compatibility
+	// Config files are not supported to match Python implementation
 
 	return &config, nil
-}
-
-// setDefaults sets default configuration values in Viper
-func setDefaults() {
-	// Proxmox defaults
-	viper.SetDefault("proxmox.port", defaultConfig.Proxmox.Port)
-	viper.SetDefault("proxmox.verify_ssl", defaultConfig.Proxmox.VerifySSL)
-	viper.SetDefault("proxmox.timeout", defaultConfig.Proxmox.Timeout)
-
-	// Operations defaults
-	viper.SetDefault("operations.max_concurrent_snapshots", defaultConfig.Operations.MaxConcurrentSnapshots)
-	viper.SetDefault("operations.max_concurrent_vm_ops", defaultConfig.Operations.MaxConcurrentVMOps)
-	viper.SetDefault("operations.default_vm_state", defaultConfig.Operations.DefaultVMState)
-	viper.SetDefault("operations.snapshot_name_max_length", defaultConfig.Operations.SnapshotNameMaxLength)
-	viper.SetDefault("operations.task_timeout", defaultConfig.Operations.TaskTimeout)
-
-	// Logging defaults
-	viper.SetDefault("logging.level", defaultConfig.Logging.Level)
-	viper.SetDefault("logging.format", defaultConfig.Logging.Format)
-	viper.SetDefault("logging.output", defaultConfig.Logging.Output)
-
-	// CLI defaults
-	viper.SetDefault("cli.batch_mode", defaultConfig.CLI.BatchMode)
-	viper.SetDefault("cli.auto_confirm", defaultConfig.CLI.AutoConfirm)
-	viper.SetDefault("cli.color_output", defaultConfig.CLI.ColorOutput)
-	viper.SetDefault("cli.progress_bars", defaultConfig.CLI.ProgressBars)
 }
 
 // Validate validates the configuration
@@ -275,41 +233,3 @@ func (c *Config) GetMaxConcurrentOperations(operationType string) int {
 	}
 }
 
-// CreateSampleConfig creates a sample configuration file
-func CreateSampleConfig(path string) error {
-	sampleConfig := `# Proxmox Snapshot Manager Configuration
-# Copy to ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
-
-proxmox:
-  host: "your-proxmox-host.example.com"
-  port: 8006
-  username: "user@pam"
-  # Use either token authentication (recommended):
-  token_name: "api-token-name"
-  token_value: "your-token-value"
-  # Or password authentication:
-  # password: "your-password"
-  verify_ssl: false
-  timeout: 30s
-
-operations:
-  max_concurrent_snapshots: 2
-  max_concurrent_vm_ops: 3
-  default_vm_state: false
-  snapshot_name_max_length: 40
-  task_timeout: 300s
-
-logging:
-  level: "info"  # panic, fatal, error, warn, info, debug, trace
-  format: "text" # text or json
-  output: "stdout" # stdout, stderr, or file path
-
-cli:
-  batch_mode: false
-  auto_confirm: false
-  color_output: true
-  progress_bars: true
-`
-
-	return os.WriteFile(path, []byte(sampleConfig), 0644)
-}
