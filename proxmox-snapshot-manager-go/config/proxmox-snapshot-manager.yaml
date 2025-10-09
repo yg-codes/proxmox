@@ -1,0 +1,39 @@
+# Proxmox Snapshot Manager Configuration Template
+#
+# WARNING: DO NOT commit real credentials to Git!
+# 
+# 1. Copy this file to: ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
+# 2. Replace the placeholder values below with your actual credentials
+# 3. The ~/.config/ directory is NOT tracked by Git (safe for credentials)
+#
+# Example setup:
+#   mkdir -p ~/.config/proxmox-snapshot-manager
+#   cp config/proxmox-snapshot-manager.yaml ~/.config/proxmox-snapshot-manager/
+#   edit ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
+
+proxmox:
+  host: "your-proxmox-host.example.com"
+  port: 8006
+  username: "username@pam"
+  token_name: "your-token-name"
+  token_value: "your-token-value-here"
+  verify_ssl: false
+  timeout: 30s
+
+operations:
+  max_concurrent_snapshots: 2
+  max_concurrent_vm_ops: 3
+  default_vm_state: false
+  snapshot_name_max_length: 40
+  task_timeout: 300s
+
+logging:
+  level: "info"  # panic, fatal, error, warn, info, debug, trace
+  format: "text" # text or json
+  output: "stdout" # stdout, stderr, or file path
+
+cli:
+  batch_mode: false
+  auto_confirm: false
+  color_output: true
+  progress_bars: true
