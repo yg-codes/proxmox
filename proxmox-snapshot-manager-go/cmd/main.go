@@ -68,8 +68,11 @@ Set environment variables: PVE_HOST, PVE_USER, PVE_TOKEN_NAME, PVE_TOKEN_VALUE`,
 	PersistentPreRunE: initializeApp,
 	Run: func(cmd *cobra.Command, args []string) {
 		if batchMode {
-			fmt.Println("No command specified. Available commands: create, list, rollback, delete, start, stop")
-			fmt.Println("Use --help for detailed usage information.")
+			fmt.Println("No command specified. Available command groups:")
+			fmt.Println("  snapshot  - Manage VM snapshots (create, list, rollback, delete)")
+			fmt.Println("  backup    - Manage VM backups (create, list, restore, delete)")
+			fmt.Println("  vm        - Manage VMs (start, stop, shutdown)")
+			fmt.Println("\nUse --help for detailed usage information.")
 			os.Exit(1)
 		} else {
 			// Interactive mode
@@ -78,44 +81,49 @@ Set environment variables: PVE_HOST, PVE_USER, PVE_TOKEN_NAME, PVE_TOKEN_VALUE`,
 	},
 }
 
-// createCmd represents the create command
-var createCmd = &cobra.Command{
+// snapshotCmd represents the snapshot command group
+var snapshotCmd = &cobra.Command{
+	Use:   "snapshot",
+	Short: "Manage VM snapshots",
+	Long:  `Create, list, rollback, and delete VM snapshots.`,
+}
+
+// Snapshot subcommands
+var snapshotCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create VM snapshots",
 	Long: `Create snapshots for one or more VMs with intelligent naming and optional VM state.
 
 Examples:
-  # Create snapshot with prefix for single VM
-  proxmox-snapshot-manager create --vmid 7303 --prefix backup
-  
+  # Create snapshot for single VM
+  proxmox-snapshot-manager snapshot create --vmid 7303 --prefix backup
+
   # Create snapshot with VM state (RAM)
-  proxmox-snapshot-manager create --vmname web01 --prefix backup --vmstate
-  
-  # Create snapshots for multiple VMs
-  proxmox-snapshot-manager create --vmid 7301,7302,7303 --prefix pre-update --batch -y
-  
+  proxmox-snapshot-manager snapshot create --vmname web01 --prefix backup --vmstate
+
+  # Create snapshots for multiple VMs (auto-bulk mode)
+  proxmox-snapshot-manager snapshot create --vmid 7301,7302,7303 --prefix pre-update -y
+
   # Create with exact snapshot name
-  proxmox-snapshot-manager create --vmid 7303 --name backup-20240101-1200`,
+  proxmox-snapshot-manager snapshot create --vmid 7303 --name backup-20240101-1200`,
 	RunE: runCreateCommand,
 }
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
+var snapshotListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List VM snapshots",
 	Long: `List snapshots for one or more VMs with detailed information.
 
 Examples:
   # List snapshots for single VM
-  proxmox-snapshot-manager list --vmid 7303
-  
+  proxmox-snapshot-manager snapshot list --vmid 7303
+
   # List snapshots for multiple VMs
-  proxmox-snapshot-manager list --vmname web01,web02`,
+  proxmox-snapshot-manager snapshot list --vmname web01,web02`,
 	RunE: runListCommand,
 }
 
-// rollbackCmd represents the rollback command
-var rollbackCmd = &cobra.Command{
+var snapshotRollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Rollback VMs to snapshots",
 	Long: `Rollback one or more VMs to a specific snapshot.
@@ -124,139 +132,147 @@ This operation will revert all changes made after the snapshot was created.
 
 Examples:
   # Rollback single VM
-  proxmox-snapshot-manager rollback --vmid 7303 --snapshot backup-20240101-1200
-  
-  # Rollback multiple VMs
-  proxmox-snapshot-manager rollback --vmid 7301,7302 --snapshot pre-update --batch -y`,
+  proxmox-snapshot-manager snapshot rollback --vmid 7303 --snapshot backup-20240101-1200
+
+  # Rollback multiple VMs (auto-bulk mode)
+  proxmox-snapshot-manager snapshot rollback --vmid 7301,7302 --snapshot pre-update -y`,
 	RunE: runRollbackCommand,
 }
 
-// deleteCmd represents the delete command
-var deleteCmd = &cobra.Command{
+var snapshotDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete VM snapshots",
 	Long: `Delete one or more snapshots from VMs.
 
 Examples:
   # Delete specific snapshot
-  proxmox-snapshot-manager delete --vmid 7303 --snapshot backup-20240101-1200
-  
+  proxmox-snapshot-manager snapshot delete --vmid 7303 --snapshot backup-20240101-1200
+
   # Delete all snapshots from VM
-  proxmox-snapshot-manager delete --vmid 7303 --all --batch -y
-  
-  # Delete snapshots from multiple VMs
-  proxmox-snapshot-manager delete --vmid 7301,7302 --snapshot pre-update --batch -y`,
+  proxmox-snapshot-manager snapshot delete --vmid 7303 --all -y
+
+  # Delete snapshots from multiple VMs (auto-bulk mode)
+  proxmox-snapshot-manager snapshot delete --vmid 7301,7302 --snapshot pre-update -y`,
 	RunE: runDeleteCommand,
 }
 
-// startCmd represents the start command
-var startCmd = &cobra.Command{
+// vmCmd represents the vm command group
+var vmCmd = &cobra.Command{
+	Use:   "vm",
+	Short: "Manage VMs",
+	Long:  `Start, stop, and shutdown virtual machines.`,
+}
+
+// VM subcommands
+var vmStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start VMs",
 	Long: `Start one or more virtual machines.
 
 Examples:
   # Start single VM
-  proxmox-snapshot-manager start --vmid 7303
-  
-  # Start multiple VMs
-  proxmox-snapshot-manager start --vmid 7301,7302,7303 --batch`,
+  proxmox-snapshot-manager vm start --vmid 7303
+
+  # Start multiple VMs (auto-bulk mode)
+  proxmox-snapshot-manager vm start --vmid 7301,7302,7303`,
 	RunE: runStartCommand,
 }
 
-// stopCmd represents the stop command
-var stopCmd = &cobra.Command{
+var vmStopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop VMs",
 	Long: `Stop one or more virtual machines.
 
 Examples:
   # Stop single VM
-  proxmox-snapshot-manager stop --vmid 7303
+  proxmox-snapshot-manager vm stop --vmid 7303
 
-  # Stop multiple VMs
-  proxmox-snapshot-manager stop --vmid 7301,7302,7303 --batch -y`,
+  # Stop multiple VMs (auto-bulk mode)
+  proxmox-snapshot-manager vm stop --vmid 7301,7302,7303 -y`,
 	RunE: runStopCommand,
 }
 
-// backupCmd represents the backup command
+// backupCmd represents the backup command group
 var backupCmd = &cobra.Command{
 	Use:   "backup",
+	Short: "Manage VM backups",
+	Long:  `Create, list, restore, and delete VM backups.`,
+}
+
+// Backup subcommands
+var backupCreateCmd = &cobra.Command{
+	Use:   "create",
 	Short: "Create VM backup",
 	Long: `Create a backup of specified VM(s) to storage.
 
 Examples:
   # Create backup with snapshot mode
-  proxmox-snapshot-manager backup --vmid 7303 --storage local-zfs
+  proxmox-snapshot-manager backup create --vmid 7303 --storage local-zfs
 
   # Create backup with suspend mode
-  proxmox-snapshot-manager backup --vmid 7303 --storage local-zfs --mode suspend
+  proxmox-snapshot-manager backup create --vmid 7303 --storage local-zfs --mode suspend
 
   # Create backup with specific compression
-  proxmox-snapshot-manager backup --vmid 7303 --storage local-zfs --compress gzip`,
+  proxmox-snapshot-manager backup create --vmid 7303 --storage local-zfs --compress gzip`,
 	RunE: runBackupCommand,
 }
 
-// listBackupsCmd represents the list-backups command
-var listBackupsCmd = &cobra.Command{
-	Use:   "list-backups",
+var backupListCmd = &cobra.Command{
+	Use:   "list",
 	Short: "List VM backups",
 	Long: `List all backups for specified VM(s).
 
 Examples:
   # List backups for single VM
-  proxmox-snapshot-manager list-backups --vmid 7303
+  proxmox-snapshot-manager backup list --vmid 7303
 
   # List backups from specific storage
-  proxmox-snapshot-manager list-backups --vmid 7303 --storage local-zfs`,
+  proxmox-snapshot-manager backup list --vmid 7303 --storage local-zfs`,
 	RunE: runListBackupsCommand,
 }
 
-// restoreCmd represents the restore command
-var restoreCmd = &cobra.Command{
+var backupRestoreCmd = &cobra.Command{
 	Use:   "restore",
 	Short: "Restore VM from backup",
 	Long: `Restore a VM from a backup file.
 
 Examples:
   # Restore from backup
-  proxmox-snapshot-manager restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve`,
+  proxmox-snapshot-manager backup restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve`,
 	RunE: runRestoreCommand,
 }
 
-// deleteBackupsCmd represents the delete-backups command
-var deleteBackupsCmd = &cobra.Command{
-	Use:   "delete-backups",
+var backupDeleteCmd = &cobra.Command{
+	Use:   "delete",
 	Short: "Delete VM backups",
 	Long: `Delete specific backup(s) or cleanup old backups.
 
 Examples:
   # Delete specific backup
-  proxmox-snapshot-manager delete-backups --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --yes
+  proxmox-snapshot-manager backup delete --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --yes
 
   # Delete backups matching pattern
-  proxmox-snapshot-manager delete-backups --vmid 7303 --pattern "*2024*" --yes
+  proxmox-snapshot-manager backup delete --vmid 7303 --pattern "*2024*" --yes
 
   # Keep only 5 most recent backups
-  proxmox-snapshot-manager delete-backups --vmid 7303 --keep-count 5 --yes
+  proxmox-snapshot-manager backup delete --vmid 7303 --keep-count 5 --yes
 
   # Delete backups older than 30 days
-  proxmox-snapshot-manager delete-backups --vmid 7303 --max-age-days 30 --yes`,
+  proxmox-snapshot-manager backup delete --vmid 7303 --max-age-days 30 --yes`,
 	RunE: runDeleteBackupsCommand,
 }
 
-// shutdownCmd represents the shutdown command
-var shutdownCmd = &cobra.Command{
+var vmShutdownCmd = &cobra.Command{
 	Use:   "shutdown",
 	Short: "Gracefully shutdown VM(s)",
 	Long: `Send ACPI shutdown signal to VM(s).
 
 Examples:
   # Shutdown single VM
-  proxmox-snapshot-manager shutdown --vmid 7303
+  proxmox-snapshot-manager vm shutdown --vmid 7303
 
-  # Shutdown multiple VMs
-  proxmox-snapshot-manager shutdown --vmid 7301,7302,7303 --yes`,
+  # Shutdown multiple VMs (auto-bulk mode)
+  proxmox-snapshot-manager vm shutdown --vmid 7301,7302,7303 --yes`,
 	RunE: runShutdownCommand,
 }
 
@@ -330,71 +346,63 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "quiet output")
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "show what would be done without actually doing it")
 
-	// Create command flags
-	createCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	createCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
-	createCmd.Flags().String("prefix", "", "snapshot prefix")
-	createCmd.Flags().String("name", "", "exact snapshot name")
-	createCmd.Flags().Bool("vmstate", false, "include VM state (RAM)")
+	// Snapshot command flags
+	snapshotCreateCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	snapshotCreateCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	snapshotCreateCmd.Flags().String("prefix", "", "snapshot prefix")
+	snapshotCreateCmd.Flags().String("name", "", "exact snapshot name")
+	snapshotCreateCmd.Flags().Bool("vmstate", false, "include VM state (RAM)")
 
-	// List command flags
-	listCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	listCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	snapshotListCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	snapshotListCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
 
-	// Rollback command flags
-	rollbackCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	rollbackCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
-	rollbackCmd.Flags().String("snapshot", "", "snapshot name to rollback to")
-	rollbackCmd.MarkFlagRequired("snapshot")
+	snapshotRollbackCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	snapshotRollbackCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	snapshotRollbackCmd.Flags().String("snapshot", "", "snapshot name to rollback to")
+	snapshotRollbackCmd.MarkFlagRequired("snapshot")
 
-	// Delete command flags
-	deleteCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	deleteCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
-	deleteCmd.Flags().String("snapshot", "", "snapshot name to delete")
-	deleteCmd.Flags().Bool("all", false, "delete all snapshots")
+	snapshotDeleteCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	snapshotDeleteCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	snapshotDeleteCmd.Flags().String("snapshot", "", "snapshot name to delete")
+	snapshotDeleteCmd.Flags().Bool("all", false, "delete all snapshots")
 
-	// Start command flags
-	startCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	startCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	// VM command flags
+	vmStartCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	vmStartCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
 
-	// Stop command flags
-	stopCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	stopCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	vmStopCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	vmStopCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+
+	vmShutdownCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	vmShutdownCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
 
 	// Backup command flags
-	backupCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	backupCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
-	backupCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage for backup (required)")
-	backupCmd.Flags().StringVar(&modeFlag, "mode", "snapshot", "Backup mode: snapshot, suspend, or stop")
-	backupCmd.Flags().StringVar(&compressFlag, "compress", "zstd", "Compression: zstd, gzip, or lzo")
-	backupCmd.MarkFlagRequired("storage")
+	backupCreateCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	backupCreateCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	backupCreateCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage for backup (required)")
+	backupCreateCmd.Flags().StringVar(&modeFlag, "mode", "snapshot", "Backup mode: snapshot, suspend, or stop")
+	backupCreateCmd.Flags().StringVar(&compressFlag, "compress", "zstd", "Compression: zstd, gzip, or lzo")
+	backupCreateCmd.MarkFlagRequired("storage")
 
-	// List-backups command flags
-	listBackupsCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	listBackupsCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
-	listBackupsCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage to check (optional, checks all if not specified)")
+	backupListCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
+	backupListCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	backupListCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage to check (optional, checks all if not specified)")
 
-	// Restore command flags
-	restoreCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated, typically one)")
-	restoreCmd.Flags().StringVar(&backupFileFlag, "backup-file", "", "Backup volid (required)")
-	restoreCmd.Flags().StringVar(&nodeFlag, "node", "", "Node name (required)")
-	restoreCmd.Flags().StringVar(&storageFlag, "storage", "", "Target storage (optional)")
-	restoreCmd.MarkFlagRequired("vmid")
-	restoreCmd.MarkFlagRequired("backup-file")
-	restoreCmd.MarkFlagRequired("node")
+	backupRestoreCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated, typically one)")
+	backupRestoreCmd.Flags().StringVar(&backupFileFlag, "backup-file", "", "Backup volid (required)")
+	backupRestoreCmd.Flags().StringVar(&nodeFlag, "node", "", "Node name (required)")
+	backupRestoreCmd.Flags().StringVar(&storageFlag, "storage", "", "Target storage (optional)")
+	backupRestoreCmd.MarkFlagRequired("vmid")
+	backupRestoreCmd.MarkFlagRequired("backup-file")
+	backupRestoreCmd.MarkFlagRequired("node")
 
-	// Delete-backups command flags
-	deleteBackupsCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated, typically one)")
-	deleteBackupsCmd.Flags().StringVar(&backupFileFlag, "backup-file", "", "Specific backup volid to delete")
-	deleteBackupsCmd.Flags().StringVar(&patternFlag, "pattern", "", "Delete backups matching pattern (e.g., '*2024*')")
-	deleteBackupsCmd.Flags().IntVar(&keepCountFlag, "keep-count", 0, "Keep only N most recent backups")
-	deleteBackupsCmd.Flags().IntVar(&maxAgeDaysFlag, "max-age-days", 0, "Delete backups older than N days")
-	deleteBackupsCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage to check")
-	deleteBackupsCmd.MarkFlagRequired("vmid")
-
-	// Shutdown command flags
-	shutdownCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
-	shutdownCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
+	backupDeleteCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated, typically one)")
+	backupDeleteCmd.Flags().StringVar(&backupFileFlag, "backup-file", "", "Specific backup volid to delete")
+	backupDeleteCmd.Flags().StringVar(&patternFlag, "pattern", "", "Delete backups matching pattern (e.g., '*2024*')")
+	backupDeleteCmd.Flags().IntVar(&keepCountFlag, "keep-count", 0, "Keep only N most recent backups")
+	backupDeleteCmd.Flags().IntVar(&maxAgeDaysFlag, "max-age-days", 0, "Delete backups older than N days")
+	backupDeleteCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage to check")
+	backupDeleteCmd.MarkFlagRequired("vmid")
 
 	// Quick operation command flags
 	quickBackupAllCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage for backup (required)")
@@ -402,18 +410,29 @@ func init() {
 	quickBackupAllCmd.Flags().StringVar(&compressFlag, "compress", "zstd", "Compression: zstd, gzip, or lzo")
 	quickBackupAllCmd.MarkFlagRequired("storage")
 
-	// Add commands
-	rootCmd.AddCommand(createCmd)
-	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(rollbackCmd)
-	rootCmd.AddCommand(deleteCmd)
-	rootCmd.AddCommand(startCmd)
-	rootCmd.AddCommand(stopCmd)
+	// Add subcommands to snapshot command group
+	snapshotCmd.AddCommand(snapshotCreateCmd)
+	snapshotCmd.AddCommand(snapshotListCmd)
+	snapshotCmd.AddCommand(snapshotRollbackCmd)
+	snapshotCmd.AddCommand(snapshotDeleteCmd)
+
+	// Add subcommands to VM command group
+	vmCmd.AddCommand(vmStartCmd)
+	vmCmd.AddCommand(vmStopCmd)
+	vmCmd.AddCommand(vmShutdownCmd)
+
+	// Add subcommands to backup command group
+	backupCmd.AddCommand(backupCreateCmd)
+	backupCmd.AddCommand(backupListCmd)
+	backupCmd.AddCommand(backupRestoreCmd)
+	backupCmd.AddCommand(backupDeleteCmd)
+
+	// Add command groups to root
+	rootCmd.AddCommand(snapshotCmd)
+	rootCmd.AddCommand(vmCmd)
 	rootCmd.AddCommand(backupCmd)
-	rootCmd.AddCommand(listBackupsCmd)
-	rootCmd.AddCommand(restoreCmd)
-	rootCmd.AddCommand(deleteBackupsCmd)
-	rootCmd.AddCommand(shutdownCmd)
+
+	// Keep quick operations as top-level commands for convenience
 	rootCmd.AddCommand(quickStartAllCmd)
 	rootCmd.AddCommand(quickStopAllCmd)
 	rootCmd.AddCommand(quickBackupAllCmd)
@@ -559,16 +578,92 @@ func resolveVMs(vmids, vmnames []string) ([]*vm.VM, error) {
 }
 
 // confirmOperation asks for user confirmation unless auto-confirm is enabled
+// Returns false if in batch mode without -y flag
 func confirmOperation(message string) bool {
+	// Batch mode without auto-confirm: cannot proceed (abort with failure)
+	if batchMode && !cfg.IsAutoConfirm() {
+		logger.Errorf("Batch mode requires -y flag for confirmations")
+		return false
+	}
+
+	// Auto-confirm enabled: proceed without prompting
 	if cfg.IsAutoConfirm() {
 		return true
 	}
 
+	// Interactive mode: ask user
 	fmt.Printf("%s (y/N): ", message)
 	var response string
 	fmt.Scanln(&response)
 	response = strings.ToLower(strings.TrimSpace(response))
 	return response == "y" || response == "yes"
+}
+
+// getUserInput prompts for user input, respecting batch mode
+// Returns empty string and error if in batch mode (cannot get user input)
+func getUserInput(prompt string) (string, error) {
+	if batchMode {
+		return "", fmt.Errorf("batch mode does not support interactive input")
+	}
+
+	fmt.Print(prompt)
+	var input string
+	fmt.Scanln(&input)
+	return input, nil
+}
+
+// getUserInputRequired prompts for required user input with validation
+// Aborts if in batch mode or input is empty
+func getUserInputRequired(prompt string, fieldName string) (string, error) {
+	input, err := getUserInput(prompt)
+	if err != nil {
+		return "", fmt.Errorf("%s required but running in batch mode", fieldName)
+	}
+
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return "", fmt.Errorf("%s is required", fieldName)
+	}
+
+	return input, nil
+}
+
+// getUserInputInt prompts for integer input, respecting batch mode
+// Returns error if in batch mode or if input cannot be parsed as integer
+func getUserInputInt(prompt string, fieldName string) (int, error) {
+	if batchMode {
+		return 0, fmt.Errorf("%s required but running in batch mode", fieldName)
+	}
+
+	fmt.Print(prompt)
+	var input int
+	_, err := fmt.Scanln(&input)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s: must be a number", fieldName)
+	}
+
+	return input, nil
+}
+
+// confirmExactText requires user to type exact text to confirm dangerous operations
+// Returns false if in batch mode without -y flag, or if text doesn't match
+func confirmExactText(prompt string, requiredText string) bool {
+	// Batch mode without auto-confirm: cannot proceed (abort with failure)
+	if batchMode && !cfg.IsAutoConfirm() {
+		logger.Errorf("Batch mode requires -y flag for confirmations")
+		return false
+	}
+
+	// Auto-confirm enabled: proceed without prompting
+	if cfg.IsAutoConfirm() {
+		return true
+	}
+
+	// Interactive mode: require exact text
+	fmt.Print(prompt)
+	var response string
+	fmt.Scanln(&response)
+	return response == requiredText
 }
 
 // printDryRunHeader prints a dry-run header
@@ -602,6 +697,17 @@ func printDryRunSummary(operation string, count int) {
 
 // Command handlers
 
+// autoDetectBatchMode automatically enables batch mode when multiple VMs are selected
+// Returns true if batch mode should be used (>1 VMs selected)
+func autoDetectBatchMode(vms []*vm.VM) bool {
+	if len(vms) > 1 {
+		// Automatically enable batch mode for multiple VMs
+		batchMode = true
+		return true
+	}
+	return false
+}
+
 func runCreateCommand(cmd *cobra.Command, args []string) error {
 	vmids, _ := cmd.Flags().GetStringSlice("vmid")
 	vmnames, _ := cmd.Flags().GetStringSlice("vmname")
@@ -627,6 +733,9 @@ func runCreateCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Auto-detect batch mode based on number of VMs
+	autoDetectBatchMode(vms)
 
 	// Determine naming
 	useExactName := name != ""
@@ -821,14 +930,9 @@ func runDeleteCommand(cmd *cobra.Command, args []string) error {
 	var confirmMsg string
 	if deleteAll {
 		confirmMsg = fmt.Sprintf("Delete ALL snapshots from %d VM(s)? This cannot be undone.", len(vms))
-		if !cfg.IsAutoConfirm() {
-			fmt.Print("Type 'DELETE ALL' to confirm: ")
-			var response string
-			fmt.Scanln(&response)
-			if response != "DELETE ALL" {
-				fmt.Println("Operation cancelled")
-				return nil
-			}
+		if !confirmExactText("Type 'DELETE ALL' to confirm: ", "DELETE ALL") {
+			fmt.Println("Operation cancelled")
+			return nil
 		}
 	} else {
 		confirmMsg = fmt.Sprintf("Delete snapshot '%s' from %d VM(s)?", snapshotName, len(vms))
@@ -1422,9 +1526,11 @@ func runInteractiveMode() {
 		fmt.Println("14. Quick backup all VMs")
 		fmt.Println("0.  Exit")
 
-		fmt.Print("\nSelect operation (0-14): ")
-		var choice int
-		fmt.Scanln(&choice)
+		choice, err := getUserInputInt("\nSelect operation (0-14): ", "menu selection")
+		if err != nil {
+			logger.Errorf("Failed to get menu selection: %v", err)
+			return
+		}
 
 		switch choice {
 		case 0:
@@ -1480,14 +1586,13 @@ func runInteractiveCreate() {
 		return
 	}
 
-	fmt.Print("Enter snapshot prefix: ")
-	var prefix string
-	fmt.Scanln(&prefix)
+	prefix, err := getUserInputRequired("Enter snapshot prefix: ", "snapshot prefix")
+	if err != nil {
+		logger.Errorf("Failed to get snapshot prefix: %v", err)
+		return
+	}
 
-	fmt.Print("Include VM state/RAM? (y/N): ")
-	var vmstateInput string
-	fmt.Scanln(&vmstateInput)
-	vmstate := strings.ToLower(vmstateInput) == "y" || strings.ToLower(vmstateInput) == "yes"
+	vmstate := confirmOperation("Include VM state/RAM?")
 
 	// Dry-run mode - just show what would happen
 	if dryRun {
@@ -1560,9 +1665,11 @@ func runInteractiveRollback() {
 		return
 	}
 
-	fmt.Print("Enter snapshot name to rollback to: ")
-	var snapshotName string
-	fmt.Scanln(&snapshotName)
+	snapshotName, err := getUserInputRequired("Enter snapshot name to rollback to: ", "snapshot name")
+	if err != nil {
+		logger.Errorf("Failed to get snapshot name: %v", err)
+		return
+	}
 
 	// Dry-run mode - just show what would happen
 	if dryRun {
@@ -1604,9 +1711,11 @@ func runInteractiveDelete() {
 		return
 	}
 
-	fmt.Print("Enter snapshot name to delete (or 'ALL' to delete all snapshots): ")
-	var snapshotName string
-	fmt.Scanln(&snapshotName)
+	snapshotName, err := getUserInputRequired("Enter snapshot name to delete (or 'ALL' to delete all snapshots): ", "snapshot name")
+	if err != nil {
+		logger.Errorf("Failed to get snapshot name: %v", err)
+		return
+	}
 
 	// Dry-run mode - just show what would happen
 	if dryRun {
@@ -1795,10 +1904,7 @@ func runInteractiveShutdown() {
 	}
 	fmt.Println()
 
-	fmt.Print("Continue with graceful shutdown? (y/N): ")
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" {
+	if !confirmOperation("Continue with graceful shutdown?") {
 		fmt.Println("Shutdown cancelled")
 		return
 	}
@@ -1830,26 +1936,30 @@ func runInteractiveBackup() {
 	}
 
 	// Get storage
-	fmt.Print("Enter storage name (e.g., local-zfs): ")
-	var storage string
-	fmt.Scanln(&storage)
-	if storage == "" {
-		fmt.Println("Storage name is required")
+	storageName, err := getUserInputRequired("Enter storage name (e.g., local-zfs): ", "storage name")
+	if err != nil {
+		logger.Errorf("Failed to get storage name: %v", err)
 		return
 	}
 
-	// Get mode
-	fmt.Print("Enter backup mode (snapshot/suspend/stop) [snapshot]: ")
-	var mode string
-	fmt.Scanln(&mode)
+	// Get mode (with default)
+	modeInput, err := getUserInput("Enter backup mode (snapshot/suspend/stop) [snapshot]: ")
+	if err != nil {
+		logger.Errorf("Failed to get backup mode: %v", err)
+		return
+	}
+	mode := strings.TrimSpace(modeInput)
 	if mode == "" {
 		mode = "snapshot"
 	}
 
-	// Get compression
-	fmt.Print("Enter compression (zstd/gzip/lzo) [zstd]: ")
-	var compress string
-	fmt.Scanln(&compress)
+	// Get compression (with default)
+	compressInput, err := getUserInput("Enter compression (zstd/gzip/lzo) [zstd]: ")
+	if err != nil {
+		logger.Errorf("Failed to get compression: %v", err)
+		return
+	}
+	compress := strings.TrimSpace(compressInput)
 	if compress == "" {
 		compress = "zstd"
 	}
@@ -1857,7 +1967,7 @@ func runInteractiveBackup() {
 	// Validate storage (skip in dry-run)
 	if !dryRun {
 		storageOps := storage.NewOperations(client, logger)
-		if err := storageOps.ValidateStorage(storage); err != nil {
+		if err := storageOps.ValidateStorage(storageName); err != nil {
 			logger.Errorf("Storage validation failed: %v", err)
 			return
 		}
@@ -1884,7 +1994,7 @@ func runInteractiveBackup() {
 	if dryRun {
 		printDryRunHeader()
 		for _, vmInstance := range vms {
-			details := fmt.Sprintf("storage=%s, mode=%s, compress=%s", storage, mode, compress)
+			details := fmt.Sprintf("storage=%s, mode=%s, compress=%s", storageName, mode, compress)
 			printDryRunAction("backup", vmInstance.VMID, vmInstance.Name, details)
 		}
 		printDryRunSummary("backup", len(vms))
@@ -1892,16 +2002,13 @@ func runInteractiveBackup() {
 	}
 
 	// Confirm operation
-	fmt.Printf("\n⚠️  Will backup %d VM(s) to storage '%s' with mode '%s':\n", len(vms), storage, mode)
+	fmt.Printf("\n⚠️  Will backup %d VM(s) to storage '%s' with mode '%s':\n", len(vms), storageName, mode)
 	for _, vmInstance := range vms {
 		fmt.Printf("  • VM %s (%s)\n", vmInstance.VMID, vmInstance.Name)
 	}
 	fmt.Println()
 
-	fmt.Print("Continue with backup? (y/N): ")
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" {
+	if !confirmOperation("Continue with backup?") {
 		fmt.Println("Backup cancelled")
 		return
 	}
@@ -1911,7 +2018,7 @@ func runInteractiveBackup() {
 	successCount := 0
 	for _, vmInstance := range vms {
 		fmt.Printf("\nBacking up VM %s (%s)...\n", vmInstance.VMID, vmInstance.Name)
-		if err := backupOps.CreateBackup(vmInstance.VMID, storage, backupMode, compress); err != nil {
+		if err := backupOps.CreateBackup(vmInstance.VMID, storageName, backupMode, compress); err != nil {
 			logger.Errorf("Failed to backup VM %s: %v", vmInstance.VMID, err)
 		} else {
 			successCount++
@@ -1946,15 +2053,18 @@ func runInteractiveListBackups() {
 	}
 
 	// Get optional storage filter
-	fmt.Print("Enter storage name to filter (optional, press Enter for all): ")
-	var storage string
-	fmt.Scanln(&storage)
+	storageInput, err := getUserInput("Enter storage name to filter (optional, press Enter for all): ")
+	if err != nil {
+		logger.Errorf("Failed to get storage filter: %v", err)
+		return
+	}
+	storageName := strings.TrimSpace(storageInput)
 
 	backupOps := backup.NewOperations(client, vmOps, logger)
 
 	for _, vmInstance := range vms {
 		fmt.Printf("\n📦 Backups for VM %s (%s):\n", vmInstance.VMID, vmInstance.Name)
-		if err := backupOps.DisplayBackups(vmInstance.VMID, storage); err != nil {
+		if err := backupOps.DisplayBackups(vmInstance.VMID, storageName); err != nil {
 			logger.Errorf("Failed to list backups for VM %s: %v", vmInstance.VMID, err)
 		}
 		if len(vms) > 1 {
@@ -1990,30 +2100,32 @@ func runInteractiveRestore() {
 		vmInstance := vms[0]
 
 		// Get backup file
-		fmt.Print("\nEnter backup volid to restore (e.g., local:backup/vzdump-qemu-7303-2025_08_06.vma.zst): ")
-		var backupFile string
-		fmt.Scanln(&backupFile)
-		if backupFile == "" {
-			fmt.Println("Backup file is required")
+		backupFile, err := getUserInputRequired("\nEnter backup volid to restore (e.g., local:backup/vzdump-qemu-7303-2025_08_06.vma.zst): ", "backup volid")
+		if err != nil {
+			logger.Errorf("Failed to get backup volid: %v", err)
 			return
 		}
 
 		// Get node
-		fmt.Print("Enter node name: ")
-		var node string
-		fmt.Scanln(&node)
-		if node == "" {
-			fmt.Println("Node name is required")
+		node, err := getUserInputRequired("Enter node name: ", "node name")
+		if err != nil {
+			logger.Errorf("Failed to get node name: %v", err)
 			return
 		}
 
 		// Get optional target storage
-		fmt.Print("Enter target storage (optional, press Enter to use original): ")
-		var targetStorage string
-		fmt.Scanln(&targetStorage)
+		targetStorageInput, err := getUserInput("Enter target storage (optional, press Enter to use original): ")
+		if err != nil {
+			logger.Errorf("Failed to get target storage: %v", err)
+			return
+		}
+		targetStorage := strings.TrimSpace(targetStorageInput)
 
-		printDryRunAction("restore", vmInstance.VMID, vmInstance.Name,
-			fmt.Sprintf("from backup '%s' on node '%s'", backupFile, node))
+		details := fmt.Sprintf("from backup '%s' on node '%s'", backupFile, node)
+		if targetStorage != "" {
+			details += fmt.Sprintf(" to storage '%s'", targetStorage)
+		}
+		printDryRunAction("restore", vmInstance.VMID, vmInstance.Name, details)
 		printDryRunSummary("restore", 1)
 		return
 	}
@@ -2046,27 +2158,26 @@ func runInteractiveRestore() {
 	}
 
 	// Get backup file
-	fmt.Print("\nEnter backup volid to restore (e.g., local:backup/vzdump-qemu-7303-2025_08_06.vma.zst): ")
-	var backupFile string
-	fmt.Scanln(&backupFile)
-	if backupFile == "" {
-		fmt.Println("Backup file is required")
+	backupFile, err := getUserInputRequired("\nEnter backup volid to restore (e.g., local:backup/vzdump-qemu-7303-2025_08_06.vma.zst): ", "backup volid")
+	if err != nil {
+		logger.Errorf("Failed to get backup volid: %v", err)
 		return
 	}
 
 	// Get node
-	fmt.Print("Enter node name: ")
-	var node string
-	fmt.Scanln(&node)
-	if node == "" {
-		fmt.Println("Node name is required")
+	node, err := getUserInputRequired("Enter node name: ", "node name")
+	if err != nil {
+		logger.Errorf("Failed to get node name: %v", err)
 		return
 	}
 
 	// Get optional target storage
-	fmt.Print("Enter target storage (optional, press Enter to use original): ")
-	var targetStorage string
-	fmt.Scanln(&targetStorage)
+	targetStorageInput, err := getUserInput("Enter target storage (optional, press Enter to use original): ")
+	if err != nil {
+		logger.Errorf("Failed to get target storage: %v", err)
+		return
+	}
+	targetStorage := strings.TrimSpace(targetStorageInput)
 
 	// Protection check
 	protectionOps := protection.NewOperations(client, vmOps, logger)
@@ -2075,10 +2186,7 @@ func runInteractiveRestore() {
 	// Confirm operation
 	fmt.Printf("\n⚠️  WARNING: This will OVERWRITE VM %s (%s) with backup %s\n",
 		vmInstance.VMID, vmInstance.Name, backupFile)
-	fmt.Print("Type 'RESTORE' to confirm: ")
-	var response string
-	fmt.Scanln(&response)
-	if response != "RESTORE" {
+	if !confirmExactText("Type 'RESTORE' to confirm: ", "RESTORE") {
 		fmt.Println("Restore cancelled")
 		return
 	}
@@ -2124,37 +2232,37 @@ func runInteractiveDeleteBackups() {
 		fmt.Println("3. Keep only N most recent backups")
 		fmt.Println("4. Delete backups older than N days")
 
-		fmt.Print("\nSelect delete option (1-4): ")
-		var option int
-		fmt.Scanln(&option)
+		option, err := getUserInputInt("\nSelect delete option (1-4): ", "delete option")
+		if err != nil {
+			logger.Errorf("Failed to get delete option: %v", err)
+			return
+		}
 
 		switch option {
 		case 1:
-			fmt.Print("Enter backup volid to delete: ")
-			var backupFile string
-			fmt.Scanln(&backupFile)
-			if backupFile == "" {
-				fmt.Println("Backup file is required")
+			backupFile, err := getUserInputRequired("Enter backup volid to delete: ", "backup volid")
+			if err != nil {
+				logger.Errorf("Failed to get backup volid: %v", err)
 				return
 			}
 			printDryRunAction("delete backup", vmInstance.VMID, vmInstance.Name,
 				fmt.Sprintf("backup='%s'", backupFile))
 
 		case 2:
-			fmt.Print("Enter pattern (e.g., '*2024*'): ")
-			var pattern string
-			fmt.Scanln(&pattern)
-			if pattern == "" {
-				fmt.Println("Pattern is required")
+			pattern, err := getUserInputRequired("Enter pattern (e.g., '*2024*'): ", "pattern")
+			if err != nil {
+				logger.Errorf("Failed to get pattern: %v", err)
 				return
 			}
 			printDryRunAction("delete backups", vmInstance.VMID, vmInstance.Name,
 				fmt.Sprintf("matching pattern='%s'", pattern))
 
 		case 3:
-			fmt.Print("Enter number of most recent backups to keep: ")
-			var keepCount int
-			fmt.Scanln(&keepCount)
+			keepCount, err := getUserInputInt("Enter number of most recent backups to keep: ", "keep count")
+			if err != nil {
+				logger.Errorf("Failed to get keep count: %v", err)
+				return
+			}
 			if keepCount <= 0 {
 				fmt.Println("Keep count must be positive")
 				return
@@ -2163,9 +2271,11 @@ func runInteractiveDeleteBackups() {
 				fmt.Sprintf("keep=%d most recent", keepCount))
 
 		case 4:
-			fmt.Print("Enter maximum age in days: ")
-			var maxAgeDays int
-			fmt.Scanln(&maxAgeDays)
+			maxAgeDays, err := getUserInputInt("Enter maximum age in days: ", "max age")
+			if err != nil {
+				logger.Errorf("Failed to get max age: %v", err)
+				return
+			}
 			if maxAgeDays <= 0 {
 				fmt.Println("Max age must be positive")
 				return
@@ -2215,25 +2325,22 @@ func runInteractiveDeleteBackups() {
 	fmt.Println("3. Keep only N most recent backups")
 	fmt.Println("4. Delete backups older than N days")
 
-	fmt.Print("\nSelect delete option (1-4): ")
-	var option int
-	fmt.Scanln(&option)
+	option, err := getUserInputInt("\nSelect delete option (1-4): ", "delete option")
+	if err != nil {
+		logger.Errorf("Failed to get delete option: %v", err)
+		return
+	}
 
 	switch option {
 	case 1:
-		fmt.Print("Enter backup volid to delete: ")
-		var backupFile string
-		fmt.Scanln(&backupFile)
-		if backupFile == "" {
-			fmt.Println("Backup file is required")
+		backupFile, err := getUserInputRequired("Enter backup volid to delete: ", "backup volid")
+		if err != nil {
+			logger.Errorf("Failed to get backup volid: %v", err)
 			return
 		}
 
 		fmt.Printf("\n⚠️  Will delete backup: %s\n", backupFile)
-		fmt.Print("Type 'DELETE' to confirm: ")
-		var response string
-		fmt.Scanln(&response)
-		if response != "DELETE" {
+		if !confirmExactText("Type 'DELETE' to confirm: ", "DELETE") {
 			fmt.Println("Deletion cancelled")
 			return
 		}
@@ -2257,19 +2364,14 @@ func runInteractiveDeleteBackups() {
 		logger.Errorf("Backup not found: %s", backupFile)
 
 	case 2:
-		fmt.Print("Enter pattern (e.g., '*2024*'): ")
-		var pattern string
-		fmt.Scanln(&pattern)
-		if pattern == "" {
-			fmt.Println("Pattern is required")
+		pattern, err := getUserInputRequired("Enter pattern (e.g., '*2024*'): ", "pattern")
+		if err != nil {
+			logger.Errorf("Failed to get pattern: %v", err)
 			return
 		}
 
 		fmt.Printf("\n⚠️  Will delete backups matching pattern: %s\n", pattern)
-		fmt.Print("Type 'DELETE' to confirm: ")
-		var response string
-		fmt.Scanln(&response)
-		if response != "DELETE" {
+		if !confirmExactText("Type 'DELETE' to confirm: ", "DELETE") {
 			fmt.Println("Deletion cancelled")
 			return
 		}
@@ -2282,19 +2384,18 @@ func runInteractiveDeleteBackups() {
 		fmt.Printf("\n✅ Deleted %d backup(s)\n", deleted)
 
 	case 3:
-		fmt.Print("Enter number of most recent backups to keep: ")
-		var keepCount int
-		fmt.Scanln(&keepCount)
+		keepCount, err := getUserInputInt("Enter number of most recent backups to keep: ", "keep count")
+		if err != nil {
+			logger.Errorf("Failed to get keep count: %v", err)
+			return
+		}
 		if keepCount <= 0 {
 			fmt.Println("Keep count must be positive")
 			return
 		}
 
 		fmt.Printf("\n⚠️  Will keep only %d most recent backups\n", keepCount)
-		fmt.Print("Type 'CLEANUP' to confirm: ")
-		var response string
-		fmt.Scanln(&response)
-		if response != "CLEANUP" {
+		if !confirmExactText("Type 'CLEANUP' to confirm: ", "CLEANUP") {
 			fmt.Println("Cleanup cancelled")
 			return
 		}
@@ -2307,19 +2408,18 @@ func runInteractiveDeleteBackups() {
 		fmt.Printf("\n✅ Cleaned up %d backup(s)\n", deleted)
 
 	case 4:
-		fmt.Print("Enter maximum age in days: ")
-		var maxAgeDays int
-		fmt.Scanln(&maxAgeDays)
+		maxAgeDays, err := getUserInputInt("Enter maximum age in days: ", "max age")
+		if err != nil {
+			logger.Errorf("Failed to get max age: %v", err)
+			return
+		}
 		if maxAgeDays <= 0 {
 			fmt.Println("Max age must be positive")
 			return
 		}
 
 		fmt.Printf("\n⚠️  Will delete backups older than %d days\n", maxAgeDays)
-		fmt.Print("Type 'CLEANUP' to confirm: ")
-		var response string
-		fmt.Scanln(&response)
-		if response != "CLEANUP" {
+		if !confirmExactText("Type 'CLEANUP' to confirm: ", "CLEANUP") {
 			fmt.Println("Cleanup cancelled")
 			return
 		}
@@ -2378,10 +2478,7 @@ func runInteractiveQuickStartAll() {
 	}
 
 	// Confirm operation
-	fmt.Print("Start all stopped VMs? (y/N): ")
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" {
+	if !confirmOperation("Start all stopped VMs?") {
 		fmt.Println("Operation cancelled")
 		return
 	}
@@ -2443,10 +2540,7 @@ func runInteractiveQuickStopAll() {
 
 	// Confirm operation with extra warning
 	fmt.Println("⚠️  WARNING: This will FORCE STOP all running VMs (not graceful shutdown)")
-	fmt.Print("Type 'FORCE STOP' to confirm: ")
-	var response string
-	fmt.Scanln(&response)
-	if response != "FORCE STOP" {
+	if !confirmExactText("Type 'FORCE STOP' to confirm: ", "FORCE STOP") {
 		fmt.Println("Operation cancelled")
 		return
 	}
@@ -2493,33 +2587,37 @@ func runInteractiveQuickBackupAll() {
 	fmt.Println()
 
 	// Get storage
-	fmt.Print("Enter storage name (e.g., local-zfs): ")
-	var storage string
-	fmt.Scanln(&storage)
-	if storage == "" {
-		fmt.Println("Storage name is required")
+	storageName, err := getUserInputRequired("Enter storage name (e.g., local-zfs): ", "storage name")
+	if err != nil {
+		logger.Errorf("Failed to get storage name: %v", err)
 		return
 	}
 
-	// Get mode
-	fmt.Print("Enter backup mode (snapshot/suspend/stop) [snapshot]: ")
-	var mode string
-	fmt.Scanln(&mode)
+	// Get mode (with default)
+	modeInput, err := getUserInput("Enter backup mode (snapshot/suspend/stop) [snapshot]: ")
+	if err != nil {
+		logger.Errorf("Failed to get backup mode: %v", err)
+		return
+	}
+	mode := strings.TrimSpace(modeInput)
 	if mode == "" {
 		mode = "snapshot"
 	}
 
-	// Get compression
-	fmt.Print("Enter compression (zstd/gzip/lzo) [zstd]: ")
-	var compress string
-	fmt.Scanln(&compress)
+	// Get compression (with default)
+	compressInput, err := getUserInput("Enter compression (zstd/gzip/lzo) [zstd]: ")
+	if err != nil {
+		logger.Errorf("Failed to get compression: %v", err)
+		return
+	}
+	compress := strings.TrimSpace(compressInput)
 	if compress == "" {
 		compress = "zstd"
 	}
 
 	// Validate storage
 	storageOps := storage.NewOperations(client, logger)
-	if err := storageOps.ValidateStorage(storage); err != nil {
+	if err := storageOps.ValidateStorage(storageName); err != nil {
 		logger.Errorf("Storage validation failed: %v", err)
 		return
 	}
@@ -2540,11 +2638,8 @@ func runInteractiveQuickBackupAll() {
 
 	// Confirm operation
 	confirmMsg := fmt.Sprintf("Backup %d VM(s) to storage '%s' with mode '%s'?",
-		len(allVMs), storage, mode)
-	fmt.Print(confirmMsg + " (y/N): ")
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" {
+		len(allVMs), storageName, mode)
+	if !confirmOperation(confirmMsg) {
 		fmt.Println("Operation cancelled")
 		return
 	}
@@ -2556,7 +2651,7 @@ func runInteractiveQuickBackupAll() {
 	successCount := 0
 	for _, vmInstance := range allVMs {
 		fmt.Printf("\nBacking up VM %s (%s)...\n", vmInstance.VMID, vmInstance.Name)
-		if err := backupOps.CreateBackup(vmInstance.VMID, storage, backupMode, compress); err != nil {
+		if err := backupOps.CreateBackup(vmInstance.VMID, storageName, backupMode, compress); err != nil {
 			logger.Errorf("Failed to backup VM %s: %v", vmInstance.VMID, err)
 		} else {
 			successCount++

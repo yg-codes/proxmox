@@ -302,18 +302,24 @@ func (s *Selector) InteractiveSelect(allVMs []*VM, prompt string) ([]*VM, error)
 	var selection string
 	fmt.Scanln(&selection)
 
-	// Handle numeric selection (menu indices)
-	if isNumericSelection(selection) {
-		return s.parseNumericSelection(selection, sortedVMs)
+	// First try to parse as VM IDs, names, wildcards, etc.
+	result, err := s.ParseVMSelection(selection, allVMs)
+	if err == nil && len(result.VMs) > 0 {
+		return result.VMs, nil
 	}
 
-	// Handle other selection formats
-	result, err := s.ParseVMSelection(selection, allVMs)
-	if err != nil {
+	// If that failed and it's numeric, try as menu position indices
+	if isNumericSelection(selection) {
+		vms, menuErr := s.parseNumericSelection(selection, sortedVMs)
+		if menuErr == nil {
+			return vms, nil
+		}
+		// If menu parsing also failed, return the original error
 		return nil, err
 	}
 
-	return result.VMs, nil
+	// Return the original error from ParseVMSelection
+	return nil, err
 }
 
 // isNumericSelection checks if the selection contains only numbers, commas, and dashes
