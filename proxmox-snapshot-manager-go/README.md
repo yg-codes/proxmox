@@ -29,6 +29,10 @@ A powerful, fast, and efficient Proxmox VM snapshot management tool written in G
 - **Real-time Monitoring**: Live progress tracking for bulk operations
 - **Cross-platform**: Builds for Linux, macOS, and Windows
 - **Type Safety**: Compile-time error detection and robust error handling
+- **Safety First**: Global --dry-run flag for all operations to preview changes
+- **Quick Operations**: One-command bulk operations for start-all, stop-all, backup-all
+- **Backup Management**: Complete backup lifecycle (create, list, restore, delete)
+- **Graceful Shutdown**: ACPI shutdown support for safe VM shutdown
 
 ## 📋 Requirements
 
@@ -231,6 +235,14 @@ proxmox-snapshot-manager start --vmid 7301,7302,7303
 
 # Stop VMs
 proxmox-snapshot-manager stop --vmname web01,web02 --batch -y
+
+# Graceful shutdown
+proxmox-snapshot-manager shutdown --vmid 7301,7302,7303 --batch -y
+
+# Quick operations
+proxmox-snapshot-manager quick-start-all
+proxmox-snapshot-manager quick-stop-all
+proxmox-snapshot-manager quick-backup-all --storage local-zfs
 ```
 
 ### Advanced Selection Patterns
@@ -255,6 +267,55 @@ proxmox-snapshot-manager create --vmid 7301,7302,7303 --prefix backup --batch -y
 
 # Quiet batch mode
 proxmox-snapshot-manager create --vmid 7303 --prefix backup --batch -y --quiet
+```
+
+### Safety Features
+
+#### Dry-Run Mode
+Preview operations without making changes:
+
+```bash
+# Preview snapshot creation
+proxmox-snapshot-manager create --vmid 7301,7302,7303 --prefix backup --dry-run
+
+# Preview backup operations
+proxmox-snapshot-manager backup --vmid 7303 --storage local-zfs --dry-run
+
+# Preview VM operations
+proxmox-snapshot-manager start --vmid 7301,7302,7303 --dry-run
+proxmox-snapshot-manager shutdown --vmid 7301,7302,7303 --dry-run
+
+# Preview backup deletion
+proxmox-snapshot-manager delete-backups --vmid 7303 --pattern "*2024*" --dry-run
+
+# Preview in interactive mode
+proxmox-snapshot-manager --dry-run
+```
+
+#### Protection Checks
+
+```bash
+# Protected VM warnings
+proxmox-snapshot-manager restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve
+# Output: ⚠️  WARNING: VM 7303 is protected! Restoring will overwrite this VM.
+```
+
+#### Quick Operations
+One-command bulk operations:
+
+```bash
+# Start all VMs
+proxmox-snapshot-manager quick-start-all
+
+# Stop all VMs
+proxmox-snapshot-manager quick-stop-all
+
+# Backup all VMs
+proxmox-snapshot-manager quick-backup-all --storage local-zfs
+
+# Quick operations with dry-run
+proxmox-snapshot-manager quick-start-all --dry-run
+proxmox-snapshot-manager quick-backup-all --storage local-zfs --dry-run
 ```
 
 ## 🏗️ Architecture Comparison
