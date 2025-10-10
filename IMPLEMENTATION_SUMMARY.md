@@ -107,7 +107,7 @@ All BKUP-001 through BKUP-016 test cases can be executed once CLI is integrated:
 
 ### New Source Files
 ```
-proxmox-snapshot-manager-go/
+proxmox-admin-cli/
 ├── pkg/
 │   ├── storage/
 │   │   └── operations.go          ✅ NEW (313 lines)
@@ -165,48 +165,48 @@ All backup and quick operation CLI commands have been successfully integrated:
 
 ```bash
 # Build the project (if not already built)
-cd proxmox-snapshot-manager-go
+cd proxmox-admin-cli
 make build
 
 # List available backup storages
-./build/proxmox-snapshot-manager list-backups --vmid 7303
+./build/proxmox-admin-cli list-backups --vmid 7303
 
 # Create a backup
-./build/proxmox-snapshot-manager backup --vmid 7303 --storage local-zfs --mode snapshot
+./build/proxmox-admin-cli backup --vmid 7303 --storage local-zfs --mode snapshot
 
 # List backups for a VM
-./build/proxmox-snapshot-manager list-backups --vmid 7303 --storage local-zfs
+./build/proxmox-admin-cli list-backups --vmid 7303 --storage local-zfs
 
 # Restore from backup
-./build/proxmox-snapshot-manager restore \
+./build/proxmox-admin-cli restore \
   --vmid 7303 \
   --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" \
   --node pve
 
 # Delete specific backup
-./build/proxmox-snapshot-manager delete-backups \
+./build/proxmox-admin-cli delete-backups \
   --vmid 7303 \
   --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" \
   --yes
 
 # Keep only 5 most recent backups
-./build/proxmox-snapshot-manager delete-backups --vmid 7303 --keep-count 5 --yes
+./build/proxmox-admin-cli delete-backups --vmid 7303 --keep-count 5 --yes
 
 # Delete backups older than 30 days
-./build/proxmox-snapshot-manager delete-backups --vmid 7303 --max-age-days 30 --yes
+./build/proxmox-admin-cli delete-backups --vmid 7303 --max-age-days 30 --yes
 
 # Graceful shutdown
-./build/proxmox-snapshot-manager shutdown --vmid 7303,7304,7305 --yes
+./build/proxmox-admin-cli shutdown --vmid 7303,7304,7305 --yes
 
 # Quick operations with dry-run safety
-./build/proxmox-snapshot-manager quick-start-all --dry-run
-./build/proxmox-snapshot-manager quick-stop-all --dry-run
-./build/proxmox-snapshot-manager quick-backup-all --storage local-zfs --dry-run
+./build/proxmox-admin-cli quick-start-all --dry-run
+./build/proxmox-admin-cli quick-stop-all --dry-run
+./build/proxmox-admin-cli quick-backup-all --storage local-zfs --dry-run
 
 # Execute quick operations (with confirmation)
-./build/proxmox-snapshot-manager quick-start-all --yes
-./build/proxmox-snapshot-manager quick-stop-all --yes
-./build/proxmox-snapshot-manager quick-backup-all --storage local-zfs --mode suspend --yes
+./build/proxmox-admin-cli quick-start-all --yes
+./build/proxmox-admin-cli quick-stop-all --yes
+./build/proxmox-admin-cli quick-backup-all --storage local-zfs --mode suspend --yes
 ```
 
 ### ✅ Quick Operations with Dry-Run Safety

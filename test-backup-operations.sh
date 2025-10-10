@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-GO_BIN="${GO_BIN:-./proxmox-snapshot-manager-go/build/proxmox-snapshot-manager}"
+GO_BIN="${GO_BIN:-./proxmox-admin-cli/build/proxmox-admin-cli}"
 TEST_VM="${TEST_VM:-7300}"
 TEST_STORAGE="${TEST_STORAGE:-local-zfs}"
 RESULTS_DIR="test-results"
@@ -123,7 +123,7 @@ check_prerequisites() {
     if [[ ! -f "$GO_BIN" ]]; then
         echo -e "${RED}❌ ERROR: Go binary not found at $GO_BIN${NC}"
         echo "Please build the Go implementation first:"
-        echo "  cd proxmox-snapshot-manager-go && make build"
+        echo "  cd proxmox-admin-cli && make build"
         exit 1
     fi
     echo -e "${GREEN}✅ Go binary found: $GO_BIN${NC}"

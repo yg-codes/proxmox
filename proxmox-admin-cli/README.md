@@ -55,7 +55,7 @@ A powerful, fast, and efficient Proxmox VE administration tool written in Go. Th
 
 ```bash
 git clone <repository-url>
-cd proxmox-snapshot-manager-go
+cd proxmox-admin-cli
 go build -o build/proxmox-admin-cli ./cmd
 ```
 

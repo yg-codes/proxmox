@@ -421,7 +421,7 @@ sed -n '/Test Environment Requirements/,/Test Categories/p' TEST_SPECIFICATION.m
 - Project README: ../README.md
 - Development Guide: ../CLAUDE.md
 - Python Legacy: ../legacy/proxmox-vm-manager/pve_vm_manager_api.py
-- Go Implementation: ../proxmox-snapshot-manager-go/
+- Go Implementation: ../proxmox-admin-cli/
 
 ### Contact
 - For specification questions: Review this README
