@@ -1,7 +1,7 @@
-# Proxmox Snapshot Manager Go - Makefile
+# Proxmox Admin CLI - Makefile
 
 # Build variables
-BINARY_NAME=proxmox-snapshot-manager
+BINARY_NAME=proxmox-admin-cli
 VERSION=$(shell git describe --tags --abbrev=0 2>/dev/null || echo "dev")
 BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -136,9 +136,9 @@ release: build-all
 # Generate sample configuration
 config:
 	@echo "Generating sample configuration..."
-	@mkdir -p ~/.config/proxmox-snapshot-manager
-	$(GOCMD) run ./$(CMD_DIR) config > ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml || true
-	@echo "Sample configuration written to ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml"
+	@mkdir -p ~/.config/proxmox-admin-cli
+	$(GOCMD) run ./$(CMD_DIR) config > ~/.config/proxmox-admin-cli/proxmox-admin-cli.yaml || true
+	@echo "Sample configuration written to ~/.config/proxmox-admin-cli/proxmox-admin-cli.yaml"
 
 # Docker build
 docker-build:

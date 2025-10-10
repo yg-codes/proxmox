@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/storage"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/storage"
 )
 
 var storageCmd = &cobra.Command{

@@ -1,6 +1,6 @@
-# Proxmox Snapshot Manager (Go)
+# Proxmox Admin CLI
 
-A powerful, fast, and efficient Proxmox VM snapshot management tool written in Go. This is a complete rewrite and enhancement of the original Python version, offering superior performance, concurrency, and deployment simplicity.
+A powerful, fast, and efficient Proxmox VE administration tool written in Go. This comprehensive CLI tool provides VM management, snapshot operations, backup management, and storage administration with superior performance, concurrency, and deployment simplicity.
 
 ## 📖 Table of Contents
 
@@ -20,18 +20,27 @@ A powerful, fast, and efficient Proxmox VM snapshot management tool written in G
 
 ## 🚀 Key Features
 
+### Core Capabilities
+- **VM Operations**: Start, stop, shutdown, list, and view detailed VM information
+- **Snapshot Management**: Create, list, rollback, and delete VM snapshots with intelligent naming
+- **Backup Management**: Complete backup lifecycle (create, list, restore, delete with retention policies)
+- **Storage Management**: List and validate backup-capable and VM disk storages
+
+### Performance & Architecture
 - **Blazing Fast**: 5-10x faster than Python version with concurrent operations
 - **Single Binary**: No runtime dependencies, easy deployment
 - **Advanced Concurrency**: Goroutine-based concurrent operations with progress tracking
+- **Cross-platform**: Builds for Linux, macOS, and Windows
+- **Type Safety**: Compile-time error detection and robust error handling
+- **Memory Efficient**: ~10-20MB footprint vs ~50-100MB (Python)
+
+### User Experience
 - **Flexible VM Selection**: Support for IDs, names, patterns, ranges, and interactive selection
 - **Comprehensive CLI**: Both interactive and batch modes with full command-line interface
 - **Smart Naming**: Intelligent snapshot naming with timestamp integration
 - **Real-time Monitoring**: Live progress tracking for bulk operations
-- **Cross-platform**: Builds for Linux, macOS, and Windows
-- **Type Safety**: Compile-time error detection and robust error handling
 - **Safety First**: Global --dry-run flag for all operations to preview changes
 - **Quick Operations**: One-command bulk operations for start-all, stop-all, backup-all
-- **Backup Management**: Complete backup lifecycle (create, list, restore, delete)
 - **Graceful Shutdown**: ACPI shutdown support for safe VM shutdown
 
 ## 📋 Requirements
@@ -47,13 +56,13 @@ A powerful, fast, and efficient Proxmox VM snapshot management tool written in G
 ```bash
 git clone <repository-url>
 cd proxmox-snapshot-manager-go
-go build -o build/proxmox-snapshot-manager ./cmd
+go build -o build/proxmox-admin-cli ./cmd
 ```
 
 ### Install to System Path (Optional)
 
 ```bash
-sudo install -m 755 build/proxmox-snapshot-manager /usr/local/bin/
+sudo install -m 755 build/proxmox-admin-cli /usr/local/bin/
 ```
 
 ## ⚙️ Setup & Configuration
@@ -81,17 +90,17 @@ Add to your `~/.bashrc` or `~/.zshrc` for persistence.
 
 ```bash
 # Create user config directory (safe from Git)
-mkdir -p ~/.config/proxmox-snapshot-manager
+mkdir -p ~/.config/proxmox-admin-cli
 
 # Copy template to user config
-cp config/proxmox-snapshot-manager.yaml ~/.config/proxmox-snapshot-manager/
+cp config/proxmox-admin-cli.yaml ~/.config/proxmox-admin-cli/
 ```
 
 **Step 2: Edit Your Configuration**
 
 ```bash
 # Edit with your real credentials
-vim ~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml
+vim ~/.config/proxmox-admin-cli/proxmox-admin-cli.yaml
 ```
 
 Replace these placeholders:
@@ -132,14 +141,14 @@ cli:
 
 1. **Command line**: `--config /path/to/config.yaml`
 2. **Environment variables**: `PVE_HOST`, `PVE_USER`, etc.
-3. **User config**: `~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`
-4. **Current directory**: `./proxmox-snapshot-manager.yaml`
-5. **System config**: `/etc/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`
+3. **User config**: `~/.config/proxmox-admin-cli/proxmox-admin-cli.yaml`
+4. **Current directory**: `./proxmox-admin-cli.yaml`
+5. **System config**: `/etc/proxmox-admin-cli/proxmox-admin-cli.yaml`
 
 ### 🔐 Security Best Practices
 
 ✅ **Safe (Git ignored)**:
-- `~/.config/proxmox-snapshot-manager/proxmox-snapshot-manager.yaml`
+- `~/.config/proxmox-admin-cli/proxmox-admin-cli.yaml`
 - Environment variables
 - Files ending with `.local.yaml`
 
@@ -152,10 +161,10 @@ cli:
 
 ```bash
 # Test connection
-./build/proxmox-snapshot-manager --help
+./build/proxmox-admin-cli --help
 
 # Verbose output to see config loading
-./build/proxmox-snapshot-manager --verbose list --help
+./build/proxmox-admin-cli --verbose list --help
 ```
 
 ### API Token Setup
@@ -173,7 +182,7 @@ pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
 
 ```bash
 # Start interactive mode
-proxmox-snapshot-manager
+proxmox-admin-cli
 ```
 
 ### Command Line Mode
@@ -182,91 +191,107 @@ proxmox-snapshot-manager
 
 ```bash
 # Single VM with prefix
-proxmox-snapshot-manager create --vmid 7303 --prefix backup
+proxmox-admin-cli create --vmid 7303 --prefix backup
 
 # Multiple VMs with VM state (RAM)
-proxmox-snapshot-manager create --vmid 7301,7302,7303 --prefix pre-update --vmstate
+proxmox-admin-cli create --vmid 7301,7302,7303 --prefix pre-update --vmstate
 
 # Using VM names
-proxmox-snapshot-manager create --vmname web01,db01 --prefix backup --batch -y
+proxmox-admin-cli create --vmname web01,db01 --prefix backup --batch -y
 
 # Exact snapshot name
-proxmox-snapshot-manager create --vmid 7303 --name backup-20240101-1200
+proxmox-admin-cli create --vmid 7303 --name backup-20240101-1200
 ```
 
 #### List Snapshots
 
 ```bash
 # Single VM
-proxmox-snapshot-manager list --vmid 7303
+proxmox-admin-cli list --vmid 7303
 
 # Multiple VMs
-proxmox-snapshot-manager list --vmname web01,web02,db01
+proxmox-admin-cli list --vmname web01,web02,db01
 ```
 
 #### Rollback Snapshots
 
 ```bash
 # Single VM
-proxmox-snapshot-manager rollback --vmid 7303 --snapshot backup-20240101-1200
+proxmox-admin-cli rollback --vmid 7303 --snapshot backup-20240101-1200
 
 # Multiple VMs (batch mode)
-proxmox-snapshot-manager rollback --vmid 7301,7302 --snapshot pre-update --batch -y
+proxmox-admin-cli rollback --vmid 7301,7302 --snapshot pre-update --batch -y
 ```
 
 #### Delete Snapshots
 
 ```bash
 # Delete specific snapshot
-proxmox-snapshot-manager delete --vmid 7303 --snapshot backup-20240101-1200
+proxmox-admin-cli delete --vmid 7303 --snapshot backup-20240101-1200
 
 # Delete all snapshots (requires confirmation)
-proxmox-snapshot-manager delete --vmid 7303 --all --batch -y
+proxmox-admin-cli delete --vmid 7303 --all --batch -y
 
 # Multiple VMs
-proxmox-snapshot-manager delete --vmid 7301,7302 --snapshot backup-20240101 --batch -y
+proxmox-admin-cli delete --vmid 7301,7302 --snapshot backup-20240101 --batch -y
 ```
 
 #### VM Operations
 
 ```bash
+# List all VMs
+proxmox-admin-cli vm list
+
+# Show VM details
+proxmox-admin-cli vm details --vmid 7303
+
 # Start VMs
-proxmox-snapshot-manager start --vmid 7301,7302,7303
+proxmox-admin-cli start --vmid 7301,7302,7303
 
 # Stop VMs
-proxmox-snapshot-manager stop --vmname web01,web02 --batch -y
+proxmox-admin-cli stop --vmname web01,web02 --batch -y
 
 # Graceful shutdown
-proxmox-snapshot-manager shutdown --vmid 7301,7302,7303 --batch -y
+proxmox-admin-cli shutdown --vmid 7301,7302,7303 --batch -y
 
 # Quick operations
-proxmox-snapshot-manager quick-start-all
-proxmox-snapshot-manager quick-stop-all
-proxmox-snapshot-manager quick-backup-all --storage local-zfs
+proxmox-admin-cli quick-start-all
+proxmox-admin-cli quick-stop-all
+proxmox-admin-cli quick-backup-all --storage local-zfs
+```
+
+#### Storage Operations
+
+```bash
+# List backup-capable storages
+proxmox-admin-cli storage list-backup
+
+# List VM disk storages
+proxmox-admin-cli storage list-vm
 ```
 
 ### Advanced Selection Patterns
 
 ```bash
 # Range selection
-proxmox-snapshot-manager create --vmid 7301-7305 --prefix backup
+proxmox-admin-cli create --vmid 7301-7305 --prefix backup
 
 # Wildcard patterns
-proxmox-snapshot-manager list --vmname "web*"
-proxmox-snapshot-manager create --vmid "73*" --prefix backup
+proxmox-admin-cli list --vmname "web*"
+proxmox-admin-cli create --vmid "73*" --prefix backup
 
 # Comma-separated mixed selection
-proxmox-snapshot-manager create --vmid 7301,7303 --vmname web01,db01 --prefix backup
+proxmox-admin-cli create --vmid 7301,7303 --vmname web01,db01 --prefix backup
 ```
 
 ### Batch Mode
 
 ```bash
 # Full automation - no prompts
-proxmox-snapshot-manager create --vmid 7301,7302,7303 --prefix backup --batch -y
+proxmox-admin-cli create --vmid 7301,7302,7303 --prefix backup --batch -y
 
 # Quiet batch mode
-proxmox-snapshot-manager create --vmid 7303 --prefix backup --batch -y --quiet
+proxmox-admin-cli create --vmid 7303 --prefix backup --batch -y --quiet
 ```
 
 ### Safety Features
@@ -276,27 +301,27 @@ Preview operations without making changes:
 
 ```bash
 # Preview snapshot creation
-proxmox-snapshot-manager create --vmid 7301,7302,7303 --prefix backup --dry-run
+proxmox-admin-cli create --vmid 7301,7302,7303 --prefix backup --dry-run
 
 # Preview backup operations
-proxmox-snapshot-manager backup --vmid 7303 --storage local-zfs --dry-run
+proxmox-admin-cli backup --vmid 7303 --storage local-zfs --dry-run
 
 # Preview VM operations
-proxmox-snapshot-manager start --vmid 7301,7302,7303 --dry-run
-proxmox-snapshot-manager shutdown --vmid 7301,7302,7303 --dry-run
+proxmox-admin-cli start --vmid 7301,7302,7303 --dry-run
+proxmox-admin-cli shutdown --vmid 7301,7302,7303 --dry-run
 
 # Preview backup deletion
-proxmox-snapshot-manager delete-backups --vmid 7303 --pattern "*2024*" --dry-run
+proxmox-admin-cli delete-backups --vmid 7303 --pattern "*2024*" --dry-run
 
 # Preview in interactive mode
-proxmox-snapshot-manager --dry-run
+proxmox-admin-cli --dry-run
 ```
 
 #### Protection Checks
 
 ```bash
 # Protected VM warnings
-proxmox-snapshot-manager restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve
+proxmox-admin-cli restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve
 # Output: ⚠️  WARNING: VM 7303 is protected! Restoring will overwrite this VM.
 ```
 
@@ -305,17 +330,17 @@ One-command bulk operations:
 
 ```bash
 # Start all VMs
-proxmox-snapshot-manager quick-start-all
+proxmox-admin-cli quick-start-all
 
 # Stop all VMs
-proxmox-snapshot-manager quick-stop-all
+proxmox-admin-cli quick-stop-all
 
 # Backup all VMs
-proxmox-snapshot-manager quick-backup-all --storage local-zfs
+proxmox-admin-cli quick-backup-all --storage local-zfs
 
 # Quick operations with dry-run
-proxmox-snapshot-manager quick-start-all --dry-run
-proxmox-snapshot-manager quick-backup-all --storage local-zfs --dry-run
+proxmox-admin-cli quick-start-all --dry-run
+proxmox-admin-cli quick-backup-all --storage local-zfs --dry-run
 ```
 
 ## 🏗️ Architecture Comparison
@@ -353,18 +378,22 @@ proxmox-snapshot-manager quick-backup-all --storage local-zfs --dry-run
 
 ## 📖 Module Architecture
 
-The Go implementation maintains the same clean modular architecture as the Python version:
+The Go implementation maintains a clean modular architecture:
 
 ```
 pkg/
 ├── api/           # HTTP client and authentication
 ├── vm/            # VM operations and selection
 ├── snapshot/      # Snapshot lifecycle management
+├── backup/        # Backup operations (create, restore, list, delete)
+├── storage/       # Storage discovery and management
 ├── bulk/          # Concurrent bulk operations
 └── config/        # Configuration management
 
 cmd/
-└── main.go        # CLI interface and commands
+├── main.go        # CLI interface and commands
+├── storage.go     # Storage management commands
+└── ...            # Other command modules
 ```
 
 ### Key Go Packages Used
@@ -402,7 +431,7 @@ The Go version maintains 100% command-line compatibility with the Python version
 python3 main.py create --vmid 7303 --prefix backup
 
 # Go version (identical)
-proxmox-snapshot-manager create --vmid 7303 --prefix backup
+proxmox-admin-cli create --vmid 7303 --prefix backup
 ```
 
 ### Migration Benefits

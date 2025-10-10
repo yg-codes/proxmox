@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/api"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/api"
 )
 
 // VM represents a Proxmox virtual machine

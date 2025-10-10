@@ -60,5 +60,5 @@ LABEL maintainer="YG Codes <support@yg.codes>" \
       org.opencontainers.image.title="Proxmox Snapshot Manager" \
       org.opencontainers.image.description="Fast and efficient Proxmox VM snapshot management tool" \
       org.opencontainers.image.version="1.0.0" \
-      org.opencontainers.image.source="https://github.com/yg-codes/proxmox-snapshot-manager-go" \
+      org.opencontainers.image.source="https://github.com/yg-codes/proxmox-admin-cli" \
       org.opencontainers.image.licenses="MIT"

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/snapshot"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/vm"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/snapshot"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/vm"
 )
 
 // OperationResult represents the result of a bulk operation on a single VM

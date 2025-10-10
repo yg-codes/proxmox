@@ -1,4 +1,4 @@
-module github.com/yg-codes/proxmox-snapshot-manager-go
+module github.com/yg-codes/proxmox-admin-cli
 
 go 1.21
 

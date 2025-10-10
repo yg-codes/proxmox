@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/api"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/api"
 )
 
 // Storage represents a Proxmox storage

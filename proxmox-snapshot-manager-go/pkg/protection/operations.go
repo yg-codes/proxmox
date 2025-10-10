@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/api"
-	"github.com/yg-codes/proxmox-snapshot-manager-go/pkg/vm"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/api"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/vm"
 )
 
 // Operations handles VM protection operations
