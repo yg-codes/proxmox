@@ -276,6 +276,26 @@ Examples:
 	RunE: runShutdownCommand,
 }
 
+var vmListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all VMs",
+	Long: `List all virtual machines in the cluster with their status.
+
+Shows VM ID, name, node, status, CPU, memory, and disk usage.`,
+	RunE: runListVMsCommand,
+}
+
+var vmDetailsCmd = &cobra.Command{
+	Use:   "details",
+	Short: "Show VM details",
+	Long: `Display detailed information about a specific VM.
+
+Examples:
+  # Show details for VM 7303
+  proxmox-snapshot-manager vm details --vmid 7303`,
+	RunE: runVMDetailsCommand,
+}
+
 // quickStartAllCmd represents the quick-start-all command
 var quickStartAllCmd = &cobra.Command{
 	Use:   "quick-start-all",
@@ -376,6 +396,9 @@ func init() {
 	vmShutdownCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
 	vmShutdownCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
 
+	vmDetailsCmd.Flags().StringSlice("vmid", []string{}, "VM ID (single VM only)")
+	vmDetailsCmd.MarkFlagRequired("vmid")
+
 	// Backup command flags
 	backupCreateCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
 	backupCreateCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
@@ -420,6 +443,8 @@ func init() {
 	vmCmd.AddCommand(vmStartCmd)
 	vmCmd.AddCommand(vmStopCmd)
 	vmCmd.AddCommand(vmShutdownCmd)
+	vmCmd.AddCommand(vmListCmd)
+	vmCmd.AddCommand(vmDetailsCmd)
 
 	// Add subcommands to backup command group
 	backupCmd.AddCommand(backupCreateCmd)
@@ -1303,6 +1328,135 @@ func runShutdownCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func runListVMsCommand(cmd *cobra.Command, args []string) error {
+	// Get all VMs
+	vms, err := vmOps.GetAllVMs()
+	if err != nil {
+		return fmt.Errorf("failed to get VMs: %w", err)
+	}
+
+	if len(vms) == 0 {
+		fmt.Println("No VMs found")
+		return nil
+	}
+
+	// Display VMs in a formatted table
+	fmt.Println("\nVirtual Machines:")
+	fmt.Println(strings.Repeat("=", 85))
+	fmt.Printf("%-8s %-35s %-15s %-12s %-8s\n",
+		"VM ID", "Name", "Node", "Status", "CPUs")
+	fmt.Println(strings.Repeat("-", 85))
+
+	for _, vmInstance := range vms {
+		status := "🟢 running"
+		if !vmInstance.Running {
+			status = "🔴 stopped"
+		}
+
+		cpuCount := fmt.Sprintf("%d", vmInstance.CPUs)
+		if vmInstance.CPUs == 0 {
+			cpuCount = "N/A"
+		}
+
+		fmt.Printf("%-8s %-35s %-15s %-12s %-8s\n",
+			vmInstance.VMID, vmInstance.Name, vmInstance.Node,
+			status, cpuCount)
+	}
+
+	fmt.Println(strings.Repeat("-", 85))
+	fmt.Printf("Total VMs: %d (Running: %d, Stopped: %d)\n",
+		len(vms),
+		countRunningVMs(vms),
+		len(vms)-countRunningVMs(vms))
+
+	return nil
+}
+
+func runVMDetailsCommand(cmd *cobra.Command, args []string) error {
+	vmids, _ := cmd.Flags().GetStringSlice("vmid")
+
+	if len(vmids) == 0 {
+		return fmt.Errorf("--vmid must be specified")
+	}
+
+	if len(vmids) > 1 {
+		return fmt.Errorf("details command only supports a single VM ID")
+	}
+
+	vmid := vmids[0]
+
+	// Get VM info
+	vmInstance, err := vmOps.GetVMStatus(vmid)
+	if err != nil {
+		return fmt.Errorf("failed to get VM status: %w", err)
+	}
+
+	// Display detailed information
+	fmt.Printf("\n╔══════════════════════════════════════════════════════════════════╗\n")
+	fmt.Printf("║                       VM Details                                 ║\n")
+	fmt.Printf("╚══════════════════════════════════════════════════════════════════╝\n\n")
+
+	fmt.Printf("VM ID:           %s\n", vmInstance.VMID)
+	fmt.Printf("Name:            %s\n", vmInstance.Name)
+	fmt.Printf("Node:            %s\n", vmInstance.Node)
+
+	status := "🟢 Running"
+	if !vmInstance.Running {
+		status = "🔴 Stopped"
+	}
+	fmt.Printf("Status:          %s\n", status)
+
+	// Configuration
+	fmt.Println("\nConfiguration:")
+	fmt.Println(strings.Repeat("-", 60))
+
+	if vmInstance.CPUs > 0 {
+		fmt.Printf("CPUs:            %d\n", vmInstance.CPUs)
+	} else {
+		fmt.Printf("CPUs:            N/A\n")
+	}
+
+	if vmInstance.Memory > 0 {
+		memGB := float64(vmInstance.Memory) / (1024 * 1024 * 1024)
+		fmt.Printf("Memory:          %.2f GB\n", memGB)
+	} else {
+		fmt.Printf("Memory:          N/A\n")
+	}
+
+	if vmInstance.DiskSize > 0 {
+		diskGB := float64(vmInstance.DiskSize) / (1024 * 1024 * 1024)
+		fmt.Printf("Disk Size:       %.2f GB\n", diskGB)
+	} else {
+		fmt.Printf("Disk Size:       N/A\n")
+	}
+
+	// Get snapshots if available
+	snapshots, err := snapOps.GetSnapshots(vmid)
+	if err == nil {
+		nonCurrentSnapshots := 0
+		for _, snap := range snapshots {
+			if snap.Name != "current" {
+				nonCurrentSnapshots++
+			}
+		}
+		fmt.Printf("\nSnapshots:       %d\n", nonCurrentSnapshots)
+	}
+
+	fmt.Printf("\n%s\n", strings.Repeat("=", 60))
+
+	return nil
+}
+
+func countRunningVMs(vms []*vm.VM) int {
+	count := 0
+	for _, vmInstance := range vms {
+		if vmInstance.Running {
+			count++
+		}
+	}
+	return count
 }
 
 func runQuickStartAllCommand(cmd *cobra.Command, args []string) error {
