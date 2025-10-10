@@ -89,10 +89,8 @@ func (ops *Operations) GetVMStorages() ([]*Storage, error) {
 				continue
 			}
 
-			statusData, ok := statusResp["data"].(map[string]interface{})
-			if !ok {
-				continue
-			}
+			// Status endpoint returns data directly at root level (no "data" wrapper)
+			statusData := statusResp
 
 			content := ""
 			if c, ok := statusData["content"].(string); ok {
@@ -194,10 +192,8 @@ func (ops *Operations) GetBackupStorages() ([]*Storage, error) {
 				continue
 			}
 
-			statusData, ok := statusResp["data"].(map[string]interface{})
-			if !ok {
-				continue
-			}
+			// Status endpoint returns data directly at root level (no "data" wrapper)
+			statusData := statusResp
 
 			content := ""
 			if c, ok := statusData["content"].(string); ok {
