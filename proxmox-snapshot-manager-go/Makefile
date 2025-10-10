@@ -57,6 +57,9 @@ clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
 	rm -rf $(BUILD_DIR)
+	rm -f coverage.out coverage.html
+	rm -f *.test
+	@echo "✓ All build artifacts cleaned"
 
 # Run tests
 test:
