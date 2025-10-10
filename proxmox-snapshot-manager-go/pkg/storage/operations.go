@@ -43,7 +43,8 @@ func (ops *Operations) GetVMStorages() ([]*Storage, error) {
 		return nil, fmt.Errorf("failed to get nodes: %w", err)
 	}
 
-	nodes, ok := nodesResp["data"].([]interface{})
+	// API client wraps array responses in "items" key
+	nodes, ok := nodesResp["items"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("invalid nodes response")
 	}
@@ -65,7 +66,8 @@ func (ops *Operations) GetVMStorages() ([]*Storage, error) {
 			continue
 		}
 
-		storages, ok := storagesResp["data"].([]interface{})
+		// API client wraps array responses in "items" key
+	storages, ok := storagesResp["items"].([]interface{})
 		if !ok {
 			continue
 		}
@@ -146,7 +148,8 @@ func (ops *Operations) GetBackupStorages() ([]*Storage, error) {
 		return nil, fmt.Errorf("failed to get nodes: %w", err)
 	}
 
-	nodes, ok := nodesResp["data"].([]interface{})
+	// API client wraps array responses in "items" key
+	nodes, ok := nodesResp["items"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("invalid nodes response")
 	}
@@ -168,7 +171,8 @@ func (ops *Operations) GetBackupStorages() ([]*Storage, error) {
 			continue
 		}
 
-		storages, ok := storagesResp["data"].([]interface{})
+		// API client wraps array responses in "items" key
+	storages, ok := storagesResp["items"].([]interface{})
 		if !ok {
 			continue
 		}

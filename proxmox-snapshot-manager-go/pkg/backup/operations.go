@@ -125,7 +125,8 @@ func (ops *Operations) ListBackupsForVM(vmid, storage string) ([]*Backup, error)
 			return nil, fmt.Errorf("failed to get nodes: %w", err)
 		}
 
-		nodes, ok := nodesResp["data"].([]interface{})
+		// API client wraps array responses in "items" key
+		nodes, ok := nodesResp["items"].([]interface{})
 		if !ok {
 			return nil, fmt.Errorf("invalid nodes response")
 		}
@@ -144,7 +145,8 @@ func (ops *Operations) ListBackupsForVM(vmid, storage string) ([]*Backup, error)
 				continue
 			}
 
-			nodeStorages, ok := storagesResp["data"].([]interface{})
+			// API client wraps array responses in "items" key
+		nodeStorages, ok := storagesResp["items"].([]interface{})
 			if !ok {
 				continue
 			}
@@ -173,7 +175,8 @@ func (ops *Operations) ListBackupsForVM(vmid, storage string) ([]*Backup, error)
 		return nil, fmt.Errorf("failed to get nodes: %w", err)
 	}
 
-	nodes, ok := nodesResp["data"].([]interface{})
+	// API client wraps array responses in "items" key
+	nodes, ok := nodesResp["items"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("invalid nodes response")
 	}
@@ -203,7 +206,8 @@ func (ops *Operations) ListBackupsForVM(vmid, storage string) ([]*Backup, error)
 				}
 			}
 
-			contents, ok := contentsResp["data"].([]interface{})
+			// API client wraps array responses in "items" key
+		contents, ok := contentsResp["items"].([]interface{})
 			if !ok {
 				continue
 			}
