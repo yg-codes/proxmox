@@ -24,6 +24,7 @@ A powerful, fast, and efficient Proxmox VE administration tool written in Go. Th
 - **Node Management**: List cluster nodes, view status, manage services, reboot/shutdown nodes
 - **Task Management**: Monitor and manage Proxmox tasks, view logs, stop running tasks
 - **Resource Monitoring**: Real-time CPU, memory, disk, network usage and historical metrics (RRD data)
+- **Container (LXC) Management**: Complete container lifecycle, creation, cloning, and snapshots
 - **VM Operations**: Start, stop, shutdown, list, and view detailed VM information
 - **Snapshot Management**: Create, list, rollback, and delete VM snapshots with intelligent naming
 - **Backup Management**: Complete backup lifecycle (create, list, restore, delete with retention policies)
@@ -422,6 +423,140 @@ proxmox-admin-cli resource history --node pve1 --vmid 100 --timeframe hour
 - **Uptime**: System uptime
 - **Load Average**: System load (for nodes)
 
+#### Container (LXC) Management
+
+Comprehensive management of LXC containers including creation, lifecycle operations, cloning, and snapshots.
+
+```bash
+# List all containers
+proxmox-admin-cli container list
+
+# Filter containers by node
+proxmox-admin-cli container list --node pve1
+
+# Filter by status
+proxmox-admin-cli container list --status running
+proxmox-admin-cli container list --status stopped
+
+# Filter by name
+proxmox-admin-cli container list --name web
+
+# Show only templates
+proxmox-admin-cli container list --template
+
+# Show container summary statistics
+proxmox-admin-cli container summary
+
+# Show detailed container information
+proxmox-admin-cli container show --node pve1 --vmid 100
+
+# Show container status and resource usage
+proxmox-admin-cli container status --node pve1 --vmid 100
+
+# Create a new container
+proxmox-admin-cli container create \
+  --node pve1 \
+  --vmid 100 \
+  --hostname mycontainer \
+  --ostemplate local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst \
+  --storage local-lvm
+
+# Create with resource specifications
+proxmox-admin-cli container create \
+  --node pve1 \
+  --vmid 101 \
+  --hostname webserver \
+  --ostemplate local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst \
+  --storage local-lvm \
+  --cpus 2 \
+  --memory 2048 \
+  --swap 512 \
+  --description "Web server container"
+
+# Create unprivileged container with features
+proxmox-admin-cli container create \
+  --node pve1 \
+  --vmid 102 \
+  --ostemplate local:vztmpl/alpine-3.18-default_20230607_amd64.tar.xz \
+  --storage local-lvm \
+  --unprivileged \
+  --nesting \
+  --onboot \
+  --protected
+
+# Start a container
+proxmox-admin-cli container start --node pve1 --vmid 100
+
+# Stop a container (forceful)
+proxmox-admin-cli container stop --node pve1 --vmid 100
+
+# Graceful shutdown with timeout
+proxmox-admin-cli container shutdown --node pve1 --vmid 100 --timeout 60
+
+# Restart a container
+proxmox-admin-cli container restart --node pve1 --vmid 100
+
+# Delete a container
+proxmox-admin-cli container delete --node pve1 --vmid 100
+
+# Delete and purge all data
+proxmox-admin-cli container delete --node pve1 --vmid 100 --purge
+
+# Clone a container (linked clone)
+proxmox-admin-cli container clone \
+  --node pve1 \
+  --vmid 100 \
+  --newid 200 \
+  --hostname cloned-container
+
+# Full clone to different storage
+proxmox-admin-cli container clone \
+  --node pve1 \
+  --vmid 100 \
+  --newid 201 \
+  --hostname production-clone \
+  --storage local-zfs \
+  --full
+
+# Clone to different node
+proxmox-admin-cli container clone \
+  --node pve1 \
+  --vmid 100 \
+  --newid 202 \
+  --target pve2 \
+  --full
+
+# Create container snapshot
+proxmox-admin-cli container snapshot create \
+  --node pve1 \
+  --vmid 100 \
+  --name backup-20250110 \
+  --description "Before system update"
+
+# List container snapshots
+proxmox-admin-cli container snapshot list --node pve1 --vmid 100
+
+# Rollback to snapshot
+proxmox-admin-cli container snapshot rollback \
+  --node pve1 \
+  --vmid 100 \
+  --name backup-20250110
+
+# Delete a snapshot
+proxmox-admin-cli container snapshot delete \
+  --node pve1 \
+  --vmid 100 \
+  --name backup-20250110
+```
+
+**Container Features:**
+- **Lifecycle Management**: Start, stop, restart, shutdown, delete
+- **Creation Options**: Resource allocation, networking, features (nesting, keyctl, fuse)
+- **Cloning**: Linked or full clones, cross-node cloning
+- **Snapshots**: Create, list, rollback, delete
+- **Filtering**: By node, status, name, template flag
+- **Summary Statistics**: Running/stopped counts, total resources
+
 ### Advanced Selection Patterns
 
 ```bash
@@ -538,6 +673,7 @@ pkg/
 ├── node/          # Node management operations
 ├── task/          # Task monitoring and management
 ├── resource/      # Resource monitoring and statistics
+├── container/     # LXC container management
 ├── vm/            # VM operations and selection
 ├── snapshot/      # Snapshot lifecycle management
 ├── backup/        # Backup operations (create, restore, list, delete)
@@ -550,6 +686,7 @@ cmd/
 ├── node.go        # Node management commands
 ├── task.go        # Task management commands
 ├── resource.go    # Resource monitoring commands
+├── container.go   # Container management commands
 ├── storage.go     # Storage management commands
 └── ...            # Other command modules
 ```

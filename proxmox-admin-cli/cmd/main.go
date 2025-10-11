@@ -15,6 +15,7 @@ import (
 	"github.com/yg-codes/proxmox-admin-cli/pkg/backup"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/bulk"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/config"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/container"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/node"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/protection"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/resource"
@@ -25,16 +26,17 @@ import (
 )
 
 var (
-	cfg        *config.Config
-	logger     *logrus.Logger
-	client     *api.Client
-	vmOps      *vm.Operations
-	vmSelector *vm.Selector
-	snapOps    *snapshot.Operations
+	cfg         *config.Config
+	logger      *logrus.Logger
+	client      *api.Client
+	vmOps       *vm.Operations
+	vmSelector  *vm.Selector
+	snapOps     *snapshot.Operations
 	bulkMgr     *bulk.Manager
 	nodeOps     *node.Operations
 	taskOps     *task.Operations
 	resourceOps *resource.Operations
+	containerOps *container.Operations
 
 	// Global flags
 	configPath  string
@@ -65,6 +67,7 @@ Provides powerful management capabilities including:
 - Node management: list, status, services, reboot, shutdown
 - Task management: list, monitor, view logs, stop running tasks
 - Resource monitoring: CPU, memory, disk, network usage and statistics
+- Container (LXC) management: create, start, stop, delete, clone, snapshots
 - VM operations: start, stop, shutdown, list, details
 - Snapshot management: create, rollback, list, delete
 - Backup management: create, restore, list, delete with cleanup policies
@@ -484,6 +487,9 @@ func init() {
 
 	// Initialize resource commands
 	initResourceCommands()
+
+	// Initialize container commands
+	initContainerCommands()
 }
 
 func main() {
@@ -573,6 +579,7 @@ func initializeApp(cmd *cobra.Command, args []string) error {
 	nodeOps = node.NewOperations(client, logger)
 	taskOps = task.NewOperations(client, logger)
 	resourceOps = resource.NewOperations(client, logger)
+	containerOps = container.NewOperations(client, logger)
 
 	// Configure bulk manager
 	bulkMgr.SetMaxWorkers(cfg.GetMaxConcurrentOperations("snapshot"))
