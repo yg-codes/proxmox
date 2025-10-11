@@ -22,6 +22,7 @@ A powerful, fast, and efficient Proxmox VE administration tool written in Go. Th
 
 ### Core Capabilities
 - **Node Management**: List cluster nodes, view status, manage services, reboot/shutdown nodes
+- **Task Management**: Monitor and manage Proxmox tasks, view logs, stop running tasks
 - **VM Operations**: Start, stop, shutdown, list, and view detailed VM information
 - **Snapshot Management**: Create, list, rollback, and delete VM snapshots with intelligent naming
 - **Backup Management**: Complete backup lifecycle (create, list, restore, delete with retention policies)
@@ -301,6 +302,61 @@ proxmox-admin-cli node shutdown --node pve1 --yes
 proxmox-admin-cli node version --node pve1
 ```
 
+#### Task Management
+
+Monitor and manage Proxmox tasks including long-running operations like backups, migrations, and snapshot creation.
+
+```bash
+# List recent tasks (default: 50)
+proxmox-admin-cli task list
+
+# List tasks with custom limit
+proxmox-admin-cli task list --limit 20
+
+# Filter tasks by node
+proxmox-admin-cli task list --node pve1
+
+# Show only running tasks
+proxmox-admin-cli task list --running
+
+# Show only failed tasks
+proxmox-admin-cli task list --errors
+
+# Filter by task type
+proxmox-admin-cli task list --type vzdump
+
+# Filter by user
+proxmox-admin-cli task list --user root@pam
+
+# Quick view of running tasks
+proxmox-admin-cli task running
+
+# Quick view of failed tasks
+proxmox-admin-cli task failed
+
+# Get detailed status of a specific task
+proxmox-admin-cli task status --node pve1 --upid UPID:pve1:00012345:...
+
+# View task log output
+proxmox-admin-cli task log --node pve1 --upid UPID:pve1:00012345:...
+
+# View last 50 lines of task log
+proxmox-admin-cli task log --node pve1 --upid UPID:pve1:00012345:... --tail 50
+
+# Follow task log (like tail -f)
+proxmox-admin-cli task log --node pve1 --upid UPID:pve1:00012345:... --follow
+
+# Stop a running task (requires confirmation)
+proxmox-admin-cli task stop --node pve1 --upid UPID:pve1:00012345:... --yes
+```
+
+**Common Task Types:**
+- `qmstart`, `qmstop`, `qmshutdown` - VM operations
+- `qmsnapshot`, `qmdelsnapshot`, `qmrollback` - Snapshot operations
+- `vzdump` - Backup operations
+- `qmrestore` - Restore operations
+- `vncproxy`, `spiceproxy` - Console proxy tasks
+
 ### Advanced Selection Patterns
 
 ```bash
@@ -415,6 +471,7 @@ The Go implementation maintains a clean modular architecture:
 pkg/
 ├── api/           # HTTP client and authentication
 ├── node/          # Node management operations
+├── task/          # Task monitoring and management
 ├── vm/            # VM operations and selection
 ├── snapshot/      # Snapshot lifecycle management
 ├── backup/        # Backup operations (create, restore, list, delete)
@@ -425,6 +482,7 @@ pkg/
 cmd/
 ├── main.go        # CLI interface and commands
 ├── node.go        # Node management commands
+├── task.go        # Task management commands
 ├── storage.go     # Storage management commands
 └── ...            # Other command modules
 ```

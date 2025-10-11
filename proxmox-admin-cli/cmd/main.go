@@ -19,6 +19,7 @@ import (
 	"github.com/yg-codes/proxmox-admin-cli/pkg/protection"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/snapshot"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/storage"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/task"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/vm"
 )
 
@@ -31,6 +32,7 @@ var (
 	snapOps    *snapshot.Operations
 	bulkMgr    *bulk.Manager
 	nodeOps    *node.Operations
+	taskOps    *task.Operations
 
 	// Global flags
 	configPath  string
@@ -59,6 +61,7 @@ var rootCmd = &cobra.Command{
 
 Provides powerful management capabilities including:
 - Node management: list, status, services, reboot, shutdown
+- Task management: list, monitor, view logs, stop running tasks
 - VM operations: start, stop, shutdown, list, details
 - Snapshot management: create, rollback, list, delete
 - Backup management: create, restore, list, delete with cleanup policies
@@ -78,6 +81,7 @@ Set environment variables: PVE_HOST, PVE_USER, PVE_TOKEN_NAME, PVE_TOKEN_VALUE`,
 			fmt.Println("  vm        - Manage VMs (start, stop, shutdown, list, details)")
 			fmt.Println("  storage   - Manage storage resources (list-backup, list-vm)")
 			fmt.Println("  node      - Manage cluster nodes (list, status, services, reboot, shutdown)")
+			fmt.Println("  task      - Manage and monitor tasks (list, status, logs, stop)")
 			fmt.Println("\nUse --help for detailed usage information.")
 			os.Exit(1)
 		} else {
@@ -470,6 +474,9 @@ func init() {
 
 	// Initialize node commands
 	initNodeCommands()
+
+	// Initialize task commands
+	initTaskCommands()
 }
 
 func main() {
@@ -557,6 +564,7 @@ func initializeApp(cmd *cobra.Command, args []string) error {
 	snapOps = snapshot.NewOperations(client, vmOps, logger)
 	bulkMgr = bulk.NewManager(vmOps, snapOps, logger)
 	nodeOps = node.NewOperations(client, logger)
+	taskOps = task.NewOperations(client, logger)
 
 	// Configure bulk manager
 	bulkMgr.SetMaxWorkers(cfg.GetMaxConcurrentOperations("snapshot"))
