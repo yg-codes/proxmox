@@ -23,6 +23,7 @@ A powerful, fast, and efficient Proxmox VE administration tool written in Go. Th
 ### Core Capabilities
 - **Node Management**: List cluster nodes, view status, manage services, reboot/shutdown nodes
 - **Task Management**: Monitor and manage Proxmox tasks, view logs, stop running tasks
+- **Resource Monitoring**: Real-time CPU, memory, disk, network usage and historical metrics (RRD data)
 - **VM Operations**: Start, stop, shutdown, list, and view detailed VM information
 - **Snapshot Management**: Create, list, rollback, and delete VM snapshots with intelligent naming
 - **Backup Management**: Complete backup lifecycle (create, list, restore, delete with retention policies)
@@ -357,6 +358,70 @@ proxmox-admin-cli task stop --node pve1 --upid UPID:pve1:00012345:... --yes
 - `qmrestore` - Restore operations
 - `vncproxy`, `spiceproxy` - Console proxy tasks
 
+#### Resource Monitoring
+
+Monitor cluster-wide resource usage including CPU, memory, disk, and network metrics across nodes, VMs, and storage.
+
+```bash
+# Show cluster resource summary with statistics
+proxmox-admin-cli resource stats
+
+# List all cluster resources
+proxmox-admin-cli resource list
+
+# List node resources
+proxmox-admin-cli resource nodes
+
+# Filter nodes by status
+proxmox-admin-cli resource nodes --status online
+
+# List VM resources
+proxmox-admin-cli resource vms
+
+# Filter VMs by type
+proxmox-admin-cli resource vms --type qemu
+proxmox-admin-cli resource vms --type lxc
+
+# Filter VMs by status
+proxmox-admin-cli resource vms --status running
+
+# Filter by node
+proxmox-admin-cli resource vms --node pve1
+
+# List storage resources
+proxmox-admin-cli resource storages
+
+# Show detailed node resource usage
+proxmox-admin-cli resource node --node pve1
+
+# Show detailed VM resource usage
+proxmox-admin-cli resource vm --node pve1 --vmid 100
+proxmox-admin-cli resource vm --node pve1 --vmid 200 --type lxc
+
+# Show resource usage history (RRD data)
+proxmox-admin-cli resource history --node pve1
+proxmox-admin-cli resource history --node pve1 --timeframe day
+proxmox-admin-cli resource history --node pve1 --timeframe week
+
+# Show VM resource history
+proxmox-admin-cli resource history --node pve1 --vmid 100 --timeframe hour
+```
+
+**Timeframe Options:**
+- `hour` - Last hour (default)
+- `day` - Last 24 hours
+- `week` - Last 7 days
+- `month` - Last 30 days
+- `year` - Last 365 days
+
+**Resource Metrics:**
+- **CPU**: Usage percentage and core count
+- **Memory**: Used/total with percentage
+- **Disk**: Used/total with percentage
+- **Network**: Input/output traffic
+- **Uptime**: System uptime
+- **Load Average**: System load (for nodes)
+
 ### Advanced Selection Patterns
 
 ```bash
@@ -472,6 +537,7 @@ pkg/
 ├── api/           # HTTP client and authentication
 ├── node/          # Node management operations
 ├── task/          # Task monitoring and management
+├── resource/      # Resource monitoring and statistics
 ├── vm/            # VM operations and selection
 ├── snapshot/      # Snapshot lifecycle management
 ├── backup/        # Backup operations (create, restore, list, delete)
@@ -483,6 +549,7 @@ cmd/
 ├── main.go        # CLI interface and commands
 ├── node.go        # Node management commands
 ├── task.go        # Task management commands
+├── resource.go    # Resource monitoring commands
 ├── storage.go     # Storage management commands
 └── ...            # Other command modules
 ```
