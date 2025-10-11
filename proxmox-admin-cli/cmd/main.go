@@ -16,6 +16,7 @@ import (
 	"github.com/yg-codes/proxmox-admin-cli/pkg/bulk"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/config"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/container"
+	"github.com/yg-codes/proxmox-admin-cli/pkg/network"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/node"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/protection"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/resource"
@@ -37,6 +38,7 @@ var (
 	taskOps     *task.Operations
 	resourceOps *resource.Operations
 	containerOps *container.Operations
+	networkOps  *network.Operations
 
 	// Global flags
 	configPath  string
@@ -68,6 +70,7 @@ Provides powerful management capabilities including:
 - Task management: list, monitor, view logs, stop running tasks
 - Resource monitoring: CPU, memory, disk, network usage and statistics
 - Container (LXC) management: create, start, stop, delete, clone, snapshots
+- Network management: interfaces, bridges, SDN zones, virtual networks, firewall
 - VM operations: start, stop, shutdown, list, details
 - Snapshot management: create, rollback, list, delete
 - Backup management: create, restore, list, delete with cleanup policies
@@ -490,6 +493,9 @@ func init() {
 
 	// Initialize container commands
 	initContainerCommands()
+
+	// Initialize network commands
+	initNetworkCommands()
 }
 
 func main() {
@@ -580,6 +586,7 @@ func initializeApp(cmd *cobra.Command, args []string) error {
 	taskOps = task.NewOperations(client, logger)
 	resourceOps = resource.NewOperations(client, logger)
 	containerOps = container.NewOperations(client, logger)
+	networkOps = network.NewOperations(client, logger)
 
 	// Configure bulk manager
 	bulkMgr.SetMaxWorkers(cfg.GetMaxConcurrentOperations("snapshot"))

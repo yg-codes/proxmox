@@ -557,6 +557,93 @@ proxmox-admin-cli container snapshot delete \
 - **Filtering**: By node, status, name, template flag
 - **Summary Statistics**: Running/stopped counts, total resources
 
+#### Network Management
+
+Comprehensive network configuration including interfaces, bridges, SDN zones, virtual networks, and firewall rules.
+
+```bash
+# List all network interfaces on a node
+proxmox-admin-cli network list --node pve1
+
+# Filter by interface type
+proxmox-admin-cli network list --node pve1 --type bridge
+proxmox-admin-cli network list --node pve1 --type bond
+proxmox-admin-cli network list --node pve1 --type vlan
+
+# Filter by active status
+proxmox-admin-cli network list --node pve1 --active true
+proxmox-admin-cli network list --node pve1 --active false
+
+# Show network summary by type
+proxmox-admin-cli network summary --node pve1
+
+# Show detailed interface information
+proxmox-admin-cli network show --node pve1 --iface vmbr0
+
+# Create a new bridge interface
+proxmox-admin-cli network create-bridge \
+  --node pve1 \
+  --iface vmbr1 \
+  --bridge-ports eth1 \
+  --address 192.168.1.1 \
+  --netmask 255.255.255.0 \
+  --gateway 192.168.1.254 \
+  --autostart
+
+# Create VLAN-aware bridge
+proxmox-admin-cli network create-bridge \
+  --node pve1 \
+  --iface vmbr2 \
+  --bridge-ports bond0 \
+  --vlan-aware \
+  --comments "Production network bridge"
+
+# Delete a network interface
+proxmox-admin-cli network delete --node pve1 --iface vmbr1
+
+# Apply pending network configuration changes
+proxmox-admin-cli network apply --node pve1
+
+# Revert pending network configuration changes
+proxmox-admin-cli network revert --node pve1
+
+# Software Defined Network (SDN) management
+
+# List all SDN zones
+proxmox-admin-cli network sdn zones
+
+# Filter SDN zones by type
+proxmox-admin-cli network sdn zones --type vlan
+proxmox-admin-cli network sdn zones --type vxlan
+
+# List SDN virtual networks
+proxmox-admin-cli network sdn vnets
+
+# Filter virtual networks by zone
+proxmox-admin-cli network sdn vnets --zone myzone
+
+# Firewall management
+
+# List firewall rules for a node
+proxmox-admin-cli network firewall rules --node pve1
+```
+
+**Network Features:**
+- **Interface Management**: Bridges, bonds, VLANs, physical interfaces
+- **Network Configuration**: IPv4/IPv6 addressing, gateway configuration
+- **Bridge Options**: STP, forward delay, VLAN awareness
+- **Configuration Workflow**: Stage changes, apply/revert pending configuration
+- **SDN Support**: Zones, virtual networks, subnets
+- **SDN Zone Types**: VLAN, VXLAN, QinQ, Simple
+- **Firewall Rules**: View and manage node and cluster firewall rules
+- **Safety**: Pending changes can be reverted before applying
+
+**Important Notes:**
+- Network changes are staged as "pending" until explicitly applied
+- Always verify configuration before applying to avoid connectivity loss
+- Use `network revert` to cancel pending changes if needed
+- Applying network configuration may temporarily disrupt connectivity
+
 ### Advanced Selection Patterns
 
 ```bash
@@ -674,6 +761,7 @@ pkg/
 ├── task/          # Task monitoring and management
 ├── resource/      # Resource monitoring and statistics
 ├── container/     # LXC container management
+├── network/       # Network, SDN, and firewall management
 ├── vm/            # VM operations and selection
 ├── snapshot/      # Snapshot lifecycle management
 ├── backup/        # Backup operations (create, restore, list, delete)
@@ -687,6 +775,7 @@ cmd/
 ├── task.go        # Task management commands
 ├── resource.go    # Resource monitoring commands
 ├── container.go   # Container management commands
+├── network.go     # Network management commands
 ├── storage.go     # Storage management commands
 └── ...            # Other command modules
 ```
