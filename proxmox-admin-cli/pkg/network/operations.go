@@ -34,13 +34,20 @@ func (ops *Operations) GetNetworkInterfaces(node string, filter *NetworkFilter) 
 
 	var interfaces []*NetworkInterface
 
-	if items, ok := resp["data"].([]interface{}); ok {
-		for _, item := range items {
-			if ifMap, ok := item.(map[string]interface{}); ok {
-				iface := parseNetworkInterface(ifMap, node)
-				if matchesNetworkFilter(iface, filter) {
-					interfaces = append(interfaces, iface)
-				}
+	// Network API returns data in "items" key, not "data" key
+	var items []interface{}
+	if itemsData, ok := resp["items"].([]interface{}); ok {
+		items = itemsData
+	} else if itemsData, ok := resp["data"].([]interface{}); ok {
+		// Fallback to "data" key for consistency with other endpoints
+		items = itemsData
+	}
+
+	for _, item := range items {
+		if ifMap, ok := item.(map[string]interface{}); ok {
+			iface := parseNetworkInterface(ifMap, node)
+			if matchesNetworkFilter(iface, filter) {
+				interfaces = append(interfaces, iface)
 			}
 		}
 	}
@@ -60,11 +67,27 @@ func (ops *Operations) GetNetworkInterface(node, iface string) (*NetworkInterfac
 		return nil, fmt.Errorf("failed to get network interface %s: %w", iface, err)
 	}
 
-	if data, ok := resp["data"].(map[string]interface{}); ok {
+	// Try "items" key first (network API format), then fallback to "data"
+	if data, ok := resp["items"].(map[string]interface{}); ok {
 		return parseNetworkInterface(data, node), nil
-	}
+	} else if data, ok := resp["data"].(map[string]interface{}); ok {
+		return parseNetworkInterface(data, node), nil
+	} else {
+		// Fallback: Get all interfaces and filter for the requested one
+		ops.logger.Debug("Single interface endpoint returned unexpected format, falling back to list")
+		interfaces, err := ops.GetNetworkInterfaces(node, &NetworkFilter{})
+		if err != nil {
+			return nil, err
+		}
 
-	return nil, fmt.Errorf("invalid response format for network interface")
+		for _, ifc := range interfaces {
+			if ifc.Iface == iface {
+				return ifc, nil
+			}
+		}
+
+		return nil, fmt.Errorf("interface %s not found", iface)
+	}
 }
 
 // CreateBridge creates a new bridge interface
