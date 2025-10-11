@@ -21,6 +21,7 @@ A powerful, fast, and efficient Proxmox VE administration tool written in Go. Th
 ## 🚀 Key Features
 
 ### Core Capabilities
+- **Node Management**: List cluster nodes, view status, manage services, reboot/shutdown nodes
 - **VM Operations**: Start, stop, shutdown, list, and view detailed VM information
 - **Snapshot Management**: Create, list, rollback, and delete VM snapshots with intelligent naming
 - **Backup Management**: Complete backup lifecycle (create, list, restore, delete with retention policies)
@@ -270,6 +271,36 @@ proxmox-admin-cli storage list-backup
 proxmox-admin-cli storage list-vm
 ```
 
+#### Node Management
+
+```bash
+# List all cluster nodes
+proxmox-admin-cli node list
+
+# Show detailed node status
+proxmox-admin-cli node status --node pve1
+
+# List services on a node
+proxmox-admin-cli node services --node pve1
+
+# Get specific service status
+proxmox-admin-cli node service status --node pve1 --service pveproxy
+
+# Start/stop/restart a service
+proxmox-admin-cli node service start --node pve1 --service pveproxy
+proxmox-admin-cli node service stop --node pve1 --service pveproxy
+proxmox-admin-cli node service restart --node pve1 --service pveproxy
+
+# Reboot a node (requires confirmation)
+proxmox-admin-cli node reboot --node pve1 --yes
+
+# Shutdown a node (requires confirmation)
+proxmox-admin-cli node shutdown --node pve1 --yes
+
+# Get node version information
+proxmox-admin-cli node version --node pve1
+```
+
 ### Advanced Selection Patterns
 
 ```bash
@@ -383,6 +414,7 @@ The Go implementation maintains a clean modular architecture:
 ```
 pkg/
 ├── api/           # HTTP client and authentication
+├── node/          # Node management operations
 ├── vm/            # VM operations and selection
 ├── snapshot/      # Snapshot lifecycle management
 ├── backup/        # Backup operations (create, restore, list, delete)
@@ -392,6 +424,7 @@ pkg/
 
 cmd/
 ├── main.go        # CLI interface and commands
+├── node.go        # Node management commands
 ├── storage.go     # Storage management commands
 └── ...            # Other command modules
 ```
