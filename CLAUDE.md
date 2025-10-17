@@ -72,6 +72,11 @@ make docker-run ARGS='--help'
 ./build/proxmox-admin-cli vm backup create --vmid 7303 --storage local
 ./build/proxmox-admin-cli vm start --vmid 7303
 
+# VM bulk operations (all VMs at once)
+./build/proxmox-admin-cli vm bulk start              # Start all stopped VMs
+./build/proxmox-admin-cli vm bulk stop               # Stop all running VMs
+./build/proxmox-admin-cli vm bulk backup --storage local  # Backup all VMs
+
 # Container commands (top-level)
 ./build/proxmox-admin-cli container list
 ./build/proxmox-admin-cli container create --name test-ct

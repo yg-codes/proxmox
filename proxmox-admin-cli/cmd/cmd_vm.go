@@ -26,4 +26,8 @@ func initVMRootCommands() {
 	backupCmd.AddCommand(backupListCmd)
 	backupCmd.AddCommand(backupRestoreCmd)
 	backupCmd.AddCommand(backupDeleteCmd)
+
+	// Add bulk operations as subcommand of vm
+	vmCmd.AddCommand(bulkCmd)
+	initBulkCommands()
 }
