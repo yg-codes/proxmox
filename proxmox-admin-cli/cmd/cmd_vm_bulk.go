@@ -42,13 +42,13 @@ This command automatically finds all stopped VMs and starts them.
 
 Examples:
   # Dry-run to see what would be started
-  proxmox-admin-cli vm bulk start --dry-run
+  pve vm bulk start --dry-run
 
   # Start all stopped VMs with confirmation
-  proxmox-admin-cli vm bulk start
+  pve vm bulk start
 
   # Start all stopped VMs without confirmation
-  proxmox-admin-cli vm bulk start --yes`,
+  pve vm bulk start --yes`,
 	RunE: runBulkStartCommand,
 }
 
@@ -63,13 +63,13 @@ WARNING: This is a force stop, not a graceful shutdown.
 
 Examples:
   # Dry-run to see what would be stopped
-  proxmox-admin-cli vm bulk stop --dry-run
+  pve vm bulk stop --dry-run
 
   # Stop all running VMs with confirmation
-  proxmox-admin-cli vm bulk stop
+  pve vm bulk stop
 
   # Stop all running VMs without confirmation
-  proxmox-admin-cli vm bulk stop --yes`,
+  pve vm bulk stop --yes`,
 	RunE: runBulkStopCommand,
 }
 
@@ -83,13 +83,13 @@ This command automatically finds all VMs and backs them up.
 
 Examples:
   # Dry-run to see what would be backed up
-  proxmox-admin-cli vm bulk backup --storage local-zfs --dry-run
+  pve vm bulk backup --storage local-zfs --dry-run
 
   # Backup all VMs with snapshot mode
-  proxmox-admin-cli vm bulk backup --storage local-zfs
+  pve vm bulk backup --storage local-zfs
 
   # Backup all VMs with specific mode and compression
-  proxmox-admin-cli vm bulk backup --storage local-zfs --mode suspend --compress gzip --yes`,
+  pve vm bulk backup --storage local-zfs --mode suspend --compress gzip --yes`,
 	RunE: runBulkBackupCommand,
 }
 

@@ -61,7 +61,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "proxmox-admin-cli",
+	Use:   "pve",
 	Short: "Proxmox Virtual Environment Administration CLI",
 	Long: `A comprehensive CLI tool for Proxmox VE administration written in Go.
 
@@ -116,16 +116,16 @@ var snapshotCreateCmd = &cobra.Command{
 
 Examples:
   # Create snapshot for single VM
-  proxmox-admin-cli snapshot create --vmid 7303 --prefix backup
+  pve snapshot create --vmid 7303 --prefix backup
 
   # Create snapshot with VM state (RAM)
-  proxmox-admin-cli snapshot create --vmname web01 --prefix backup --vmstate
+  pve snapshot create --vmname web01 --prefix backup --vmstate
 
   # Create snapshots for multiple VMs (auto-bulk mode)
-  proxmox-admin-cli snapshot create --vmid 7301,7302,7303 --prefix pre-update -y
+  pve snapshot create --vmid 7301,7302,7303 --prefix pre-update -y
 
   # Create with exact snapshot name
-  proxmox-admin-cli snapshot create --vmid 7303 --name backup-20240101-1200`,
+  pve snapshot create --vmid 7303 --name backup-20240101-1200`,
 	RunE: runCreateCommand,
 }
 
@@ -136,10 +136,10 @@ var snapshotListCmd = &cobra.Command{
 
 Examples:
   # List snapshots for single VM
-  proxmox-admin-cli snapshot list --vmid 7303
+  pve snapshot list --vmid 7303
 
   # List snapshots for multiple VMs
-  proxmox-admin-cli snapshot list --vmname web01,web02`,
+  pve snapshot list --vmname web01,web02`,
 	RunE: runListCommand,
 }
 
@@ -152,10 +152,10 @@ This operation will revert all changes made after the snapshot was created.
 
 Examples:
   # Rollback single VM
-  proxmox-admin-cli snapshot rollback --vmid 7303 --snapshot backup-20240101-1200
+  pve snapshot rollback --vmid 7303 --snapshot backup-20240101-1200
 
   # Rollback multiple VMs (auto-bulk mode)
-  proxmox-admin-cli snapshot rollback --vmid 7301,7302 --snapshot pre-update -y`,
+  pve snapshot rollback --vmid 7301,7302 --snapshot pre-update -y`,
 	RunE: runRollbackCommand,
 }
 
@@ -166,13 +166,13 @@ var snapshotDeleteCmd = &cobra.Command{
 
 Examples:
   # Delete specific snapshot
-  proxmox-admin-cli snapshot delete --vmid 7303 --snapshot backup-20240101-1200
+  pve snapshot delete --vmid 7303 --snapshot backup-20240101-1200
 
   # Delete all snapshots from VM
-  proxmox-admin-cli snapshot delete --vmid 7303 --all -y
+  pve snapshot delete --vmid 7303 --all -y
 
   # Delete snapshots from multiple VMs (auto-bulk mode)
-  proxmox-admin-cli snapshot delete --vmid 7301,7302 --snapshot pre-update -y`,
+  pve snapshot delete --vmid 7301,7302 --snapshot pre-update -y`,
 	RunE: runDeleteCommand,
 }
 
@@ -191,10 +191,10 @@ var vmStartCmd = &cobra.Command{
 
 Examples:
   # Start single VM
-  proxmox-admin-cli vm start --vmid 7303
+  pve vm start --vmid 7303
 
   # Start multiple VMs (auto-bulk mode)
-  proxmox-admin-cli vm start --vmid 7301,7302,7303`,
+  pve vm start --vmid 7301,7302,7303`,
 	RunE: runStartCommand,
 }
 
@@ -205,10 +205,10 @@ var vmStopCmd = &cobra.Command{
 
 Examples:
   # Stop single VM
-  proxmox-admin-cli vm stop --vmid 7303
+  pve vm stop --vmid 7303
 
   # Stop multiple VMs (auto-bulk mode)
-  proxmox-admin-cli vm stop --vmid 7301,7302,7303 -y`,
+  pve vm stop --vmid 7301,7302,7303 -y`,
 	RunE: runStopCommand,
 }
 
@@ -227,13 +227,13 @@ var backupCreateCmd = &cobra.Command{
 
 Examples:
   # Create backup with snapshot mode
-  proxmox-admin-cli backup create --vmid 7303 --storage local-zfs
+  pve backup create --vmid 7303 --storage local-zfs
 
   # Create backup with suspend mode
-  proxmox-admin-cli backup create --vmid 7303 --storage local-zfs --mode suspend
+  pve backup create --vmid 7303 --storage local-zfs --mode suspend
 
   # Create backup with specific compression
-  proxmox-admin-cli backup create --vmid 7303 --storage local-zfs --compress gzip`,
+  pve backup create --vmid 7303 --storage local-zfs --compress gzip`,
 	RunE: runBackupCommand,
 }
 
@@ -244,10 +244,10 @@ var backupListCmd = &cobra.Command{
 
 Examples:
   # List backups for single VM
-  proxmox-admin-cli backup list --vmid 7303
+  pve backup list --vmid 7303
 
   # List backups from specific storage
-  proxmox-admin-cli backup list --vmid 7303 --storage local-zfs`,
+  pve backup list --vmid 7303 --storage local-zfs`,
 	RunE: runListBackupsCommand,
 }
 
@@ -258,7 +258,7 @@ var backupRestoreCmd = &cobra.Command{
 
 Examples:
   # Restore from backup
-  proxmox-admin-cli backup restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve`,
+  pve backup restore --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --node pve`,
 	RunE: runRestoreCommand,
 }
 
@@ -269,16 +269,16 @@ var backupDeleteCmd = &cobra.Command{
 
 Examples:
   # Delete specific backup
-  proxmox-admin-cli backup delete --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --yes
+  pve backup delete --vmid 7303 --backup-file "local:backup/vzdump-qemu-7303-2025_08_06.vma.zst" --yes
 
   # Delete backups matching pattern
-  proxmox-admin-cli backup delete --vmid 7303 --pattern "*2024*" --yes
+  pve backup delete --vmid 7303 --pattern "*2024*" --yes
 
   # Keep only 5 most recent backups
-  proxmox-admin-cli backup delete --vmid 7303 --keep-count 5 --yes
+  pve backup delete --vmid 7303 --keep-count 5 --yes
 
   # Delete backups older than 30 days
-  proxmox-admin-cli backup delete --vmid 7303 --max-age-days 30 --yes`,
+  pve backup delete --vmid 7303 --max-age-days 30 --yes`,
 	RunE: runDeleteBackupsCommand,
 }
 
@@ -289,10 +289,10 @@ var vmShutdownCmd = &cobra.Command{
 
 Examples:
   # Shutdown single VM
-  proxmox-admin-cli vm shutdown --vmid 7303
+  pve vm shutdown --vmid 7303
 
   # Shutdown multiple VMs (auto-bulk mode)
-  proxmox-admin-cli vm shutdown --vmid 7301,7302,7303 --yes`,
+  pve vm shutdown --vmid 7301,7302,7303 --yes`,
 	RunE: runShutdownCommand,
 }
 
@@ -312,7 +312,7 @@ var vmDetailsCmd = &cobra.Command{
 
 Examples:
   # Show details for VM 7303
-  proxmox-admin-cli vm details --vmid 7303`,
+  pve vm details --vmid 7303`,
 	RunE: runVMDetailsCommand,
 }
 

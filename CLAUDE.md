@@ -52,34 +52,34 @@ make clean          # Remove build artifacts
 make docker-build
 make docker-run ARGS='--help'
 
-# Direct usage (after build) - NEW AWS-STYLE COMMAND STRUCTURE
-./build/proxmox-admin-cli --help
+# Direct usage (after build) - AWS-STYLE COMMAND STRUCTURE
+./build/pve --help
 
 # Cluster commands (task, storage, network)
-./build/proxmox-admin-cli cluster task list
-./build/proxmox-admin-cli cluster storage list-backup
-./build/proxmox-admin-cli cluster network list --node pve1
+pve cluster task list
+pve cluster storage list-backup
+pve cluster network list --node pve1
 
 # Node commands (resource monitoring, services, power)
-./build/proxmox-admin-cli node list
-./build/proxmox-admin-cli node status --node pve1
-./build/proxmox-admin-cli node resource stats --node pve1
+pve node list
+pve node status --node pve1
+pve node resource stats --node pve1
 
 # VM commands (snapshot, backup, lifecycle)
-./build/proxmox-admin-cli vm list
-./build/proxmox-admin-cli vm snapshot create --vmid 7303 --prefix backup
-./build/proxmox-admin-cli vm snapshot list --vmid 7303
-./build/proxmox-admin-cli vm backup create --vmid 7303 --storage local
-./build/proxmox-admin-cli vm start --vmid 7303
+pve vm list
+pve vm snapshot create --vmid 7303 --prefix backup
+pve vm snapshot list --vmid 7303
+pve vm backup create --vmid 7303 --storage local
+pve vm start --vmid 7303
 
 # VM bulk operations (all VMs at once)
-./build/proxmox-admin-cli vm bulk start              # Start all stopped VMs
-./build/proxmox-admin-cli vm bulk stop               # Stop all running VMs
-./build/proxmox-admin-cli vm bulk backup --storage local  # Backup all VMs
+pve vm bulk start              # Start all stopped VMs
+pve vm bulk stop               # Stop all running VMs
+pve vm bulk backup --storage local  # Backup all VMs
 
 # Container commands (top-level)
-./build/proxmox-admin-cli container list
-./build/proxmox-admin-cli container create --name test-ct
+pve container list
+pve container create --name test-ct
 ```
 
 ### Python Modular Implementation
@@ -281,9 +281,9 @@ proxmox-admin-cli/
 python3 main.py create --vmid 7303 --prefix backup
 python3 main.py backup --vmid 7303 --storage local
 
-# Go version (AWS-style hierarchy)
-proxmox-admin-cli vm snapshot create --vmid 7303 --prefix backup
-proxmox-admin-cli vm backup create --vmid 7303 --storage local
+# Go version (AWS-style hierarchy - binary name: pve)
+pve vm snapshot create --vmid 7303 --prefix backup
+pve vm backup create --vmid 7303 --storage local
 
 # Note: The Go version uses nested commands similar to AWS CLI:
 # - cluster (task, storage, network)
