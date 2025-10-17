@@ -4,22 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This repository provides comprehensive Proxmox VE management tools in three implementations:
+This repository provides comprehensive Proxmox VE management tools in two implementations:
 
-1. **Go Implementation** (Recommended for production): High-performance, single-binary snapshot manager
+1. **Go Implementation** (Recommended for production): High-performance, single-binary admin CLI
 2. **Python Modular** (Stable): Clean architecture with VM and snapshot management
-3. **Python Legacy** (Deprecated): Original monolithic implementations
 
 ## Directory Structure
 
 ```
 proxmox/
 ├── proxmox-admin-cli/              # Go implementation (5-10x faster)
-├── modular/                        # Python modular implementations
-│   ├── snapshot-manager/          # Modular snapshot management
-│   ├── vm-manager/                # Modular VM & backup management
-│   └── pve-snapshots-cli.py       # CLI wrapper
-└── legacy/                         # Deprecated monolithic scripts
+└── python/                         # Python implementations
+    └── modular/                    # Modular implementations
+        ├── snapshot-manager/       # Modular snapshot management
+        ├── vm-manager/             # Modular VM & backup management
+        └── pve-snapshots-cli.py    # CLI wrapper
 ```
 
 ## Development Commands
@@ -88,14 +87,14 @@ pve container create --name test-ct
 # Installation (choose one approach)
 
 # Option 1: Global installation with pipx (recommended)
-cd modular/
+cd python/modular/
 pipx install ./snapshot-manager/
 pipx install ./vm-manager/
 pve-snapshot-manager --help
 pve-vm-manager-modular --help
 
 # Option 2: Project development with uv
-cd modular/snapshot-manager/
+cd python/modular/snapshot-manager/
 uv run python main.py --help
 cd ../vm-manager/
 uv run python main.py --help
@@ -270,10 +269,10 @@ proxmox-admin-cli/
 
 ## Migration Guide
 
-### Python Legacy → Python Modular
-1. Replace `legacy/pve_snapshots/` with `modular/snapshot-manager/`
-2. Replace `legacy/proxmox-vm-manager/` with `modular/vm-manager/`
-3. Use `./pve-snapshots-cli.py` for convenient snapshot management
+### Python Modular
+- Snapshot management: `python/modular/snapshot-manager/`
+- VM management: `python/modular/vm-manager/`
+- CLI wrapper: `python/modular/pve-snapshots-cli.py`
 
 ### Python → Go (AWS-Style Command Structure)
 ```bash

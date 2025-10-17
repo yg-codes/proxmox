@@ -6,34 +6,37 @@ This directory contains comprehensive Proxmox VE management tools organized into
 
 ```
 proxmox/
-├── legacy/           # Monolithic implementations (deprecated)
-│   ├── pve_snapshots/        # Original monolithic snapshot scripts
-│   └── proxmox-vm-manager/   # Original monolithic VM manager
-├── modular/          # Modern modular implementations (recommended)
-│   ├── snapshot-manager/     # Modular snapshot management system
-│   ├── vm-manager/           # Modular VM management system
-│   └── pve-snapshots-cli.py  # CLI wrapper for snapshot-manager
-├── CLAUDE.md         # Development guidelines (ignored)
-└── README.md        # This file
+├── proxmox-admin-cli/        # Go implementation (recommended)
+│   ├── cmd/                  # CLI command structure
+│   ├── pkg/                  # Core packages
+│   └── build/                # Compiled binaries
+├── python/                   # Python implementations
+│   └── modular/              # Modular Python tools
+│       ├── snapshot-manager/ # Snapshot management
+│       ├── vm-manager/       # VM management
+│       └── pve-snapshots-cli.py  # CLI wrapper
+├── CLAUDE.md                 # Development guidelines
+└── README.md                 # This file
 ```
 
 ## 🎯 Recommended Usage
 
-### For New Development
-Use the **modular implementations** in the `modular/` directory:
+### For Production
+Use the **Go implementation** in `proxmox-admin-cli/`:
 
-- **`modular/snapshot-manager/`** - Comprehensive snapshot management system
-- **`modular/vm-manager/`** - Complete VM lifecycle management
+- **Binary name**: `pve` (AWS CLI-style)
+- **Features**: Full cluster management with AWS-style command hierarchy
+- **Performance**: 5-10x faster than Python with goroutine-based concurrency
 
-### For Legacy Support  
-The **legacy implementations** in the `legacy/` directory are maintained for compatibility:
+### For Python Development
+Use the **Python modular implementations** in `python/modular/`:
 
-- **`legacy/pve_snapshots/`** - Original monolithic snapshot scripts
-- **`legacy/proxmox-vm-manager/`** - Original VM management script
+- **`python/modular/snapshot-manager/`** - Comprehensive snapshot management system
+- **`python/modular/vm-manager/`** - Complete VM lifecycle management
 
 ## ✨ Features
 
-### VM Manager (`modular/vm-manager/`)
+### VM Manager (`python/modular/vm-manager/`)
 - **VM Lifecycle Management**: Start, stop, shutdown VMs with safety checks
 - **Complete Backup Management**: Create, list, restore, and delete VM backups with multiple modes
   - Individual backup deletion with progress tracking
@@ -45,7 +48,7 @@ The **legacy implementations** in the `legacy/` directory are maintained for com
 - **Bulk Operations**: Concurrent operations on multiple VMs
 - **CLI & Interactive Modes**: Both command-line and interactive interfaces
 
-### Snapshot Manager (`modular/snapshot-manager/`)
+### Snapshot Manager (`python/modular/snapshot-manager/`)
 - **Complete Snapshot Lifecycle**: Create, list, rollback, and delete snapshots
 - **Flexible Naming**: Prefix-based or exact snapshot naming
 - **VM State Support**: Optional inclusion of VM RAM state
@@ -76,7 +79,7 @@ python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
 # Install Proxmox tools globally
-cd modular/
+cd python/modular/
 pipx install ./snapshot-manager/
 pipx install ./vm-manager/
 
@@ -94,7 +97,7 @@ For development or project-specific usage:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Navigate to specific project
-cd modular/snapshot-manager/
+cd python/modular/snapshot-manager/
 uv run python main.py --help
 
 cd ../vm-manager/
@@ -152,7 +155,7 @@ pve-vm-manager-modular restore --vmid 7303 --backup-file "local:backup/vzdump-qe
 
 #### Project Development Usage
 ```bash
-cd modular/vm-manager/
+cd python/modular/vm-manager/
 uv run python main.py --help
 
 # Command line examples with uv
@@ -186,7 +189,7 @@ pve-snapshot-manager delete --vmid 7303 --snapshot_name backup-20250101 --yes
 
 #### Project Development Usage
 ```bash
-cd modular/snapshot-manager/
+cd python/modular/snapshot-manager/
 uv run python main.py --help
 
 # Command line usage with uv
@@ -199,15 +202,15 @@ uv run python main.py delete --vmid 7303 --snapshot_name backup-20250101 --yes
 #### Helper Wrapper
 ```bash
 # The helper wrapper provides guidance and fallback
-cd modular/
+cd python/modular/
 ./pve-snapshots-cli.py
 ```
 
 ## 🔄 Migration Guide
 
 ### From Legacy to Modular
-1. **Snapshot Operations**: Replace `legacy/pve_snapshots/` usage with `modular/snapshot-manager/`
-2. **VM Management**: Replace `legacy/proxmox-vm-manager/` usage with `modular/vm-manager/`
+1. **Snapshot Operations**: Replace `legacy/pve_snapshots/` usage with `python/modular/snapshot-manager/`
+2. **VM Management**: Replace `legacy/proxmox-vm-manager/` usage with `python/modular/vm-manager/`
 3. **CLI Access**: Use `./pve-snapshots-cli.py` for convenient snapshot management
 
 ### Benefits of Modular Approach
