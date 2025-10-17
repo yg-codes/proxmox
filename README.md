@@ -1,40 +1,114 @@
 # Proxmox Management Tools
 
-This directory contains comprehensive Proxmox VE management tools organized into two main categories:
+Comprehensive Proxmox VE management tools with AWS-style CLI interface and automated CI/CD.
+
+[![Release](https://img.shields.io/github/v/release/yg-codes/proxmox)](https://github.com/yg-codes/proxmox/releases)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/yg-codes/proxmox/release.yml)](https://github.com/yg-codes/proxmox/actions)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/yg-codes/proxmox?filename=proxmox-admin-cli%2Fgo.mod)](https://github.com/yg-codes/proxmox)
 
 ## 📁 Directory Structure
 
 ```
 proxmox/
-├── proxmox-admin-cli/        # Go implementation (recommended)
-│   ├── cmd/                  # CLI command structure
-│   ├── pkg/                  # Core packages
-│   └── build/                # Compiled binaries
+├── proxmox-admin-cli/        # Go implementation (Production Ready)
+│   ├── cmd/                  # AWS-style CLI command structure
+│   ├── pkg/                  # Core packages (api, vm, snapshot, backup, etc.)
+│   ├── Makefile              # Build automation
+│   └── README.md             # Go implementation docs
 ├── python/                   # Python implementations
 │   └── modular/              # Modular Python tools
 │       ├── snapshot-manager/ # Snapshot management
-│       ├── vm-manager/       # VM management
+│       ├── vm-manager/       # VM & backup management
 │       └── pve-snapshots-cli.py  # CLI wrapper
+├── .github/
+│   └── workflows/
+│       └── release.yml       # Automated build & release
 ├── CLAUDE.md                 # Development guidelines
 └── README.md                 # This file
 ```
 
-## 🎯 Recommended Usage
+## 🎯 Quick Start
 
-### For Production
-Use the **Go implementation** in `proxmox-admin-cli/`:
+### Download Pre-built Binaries (Recommended)
 
-- **Binary name**: `pve` (AWS CLI-style)
-- **Features**: Full cluster management with AWS-style command hierarchy
-- **Performance**: 5-10x faster than Python with goroutine-based concurrency
+**Linux (amd64)**
+```bash
+# Download latest release
+wget https://github.com/yg-codes/proxmox/releases/latest/download/pve-linux-amd64
+sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
+pve --version
+```
 
-### For Python Development
-Use the **Python modular implementations** in `python/modular/`:
+**Windows (amd64)**
+```powershell
+# Download from: https://github.com/yg-codes/proxmox/releases/latest
+# Rename to pve.exe and add to PATH
+pve.exe --version
+```
 
-- **`python/modular/snapshot-manager/`** - Comprehensive snapshot management system
-- **`python/modular/vm-manager/`** - Complete VM lifecycle management
+### Configuration
+```bash
+# Set environment variables
+export PVE_HOST=proxmox-host.com
+export PVE_USER=username@pam
+export PVE_TOKEN_NAME=token-name
+export PVE_TOKEN_VALUE=token-value
+
+# Test connection
+pve cluster task list
+```
+
+## 🚀 Recommended Usage
+
+### For Production: Go Implementation (`pve`)
+**Binary name**: `pve` (AWS CLI-style naming)
+
+**Key Features**:
+- ⚡ **5-10x faster** than Python with goroutine-based concurrency
+- 📦 **Single binary** with no runtime dependencies
+- 🏗️ **AWS-style hierarchy**: `pve cluster|node|vm|container`
+- 🔄 **Automated releases** via GitHub Actions
+- 💪 **Production ready** with comprehensive error handling
+
+**Command Structure**:
+```bash
+pve cluster task list                    # Cluster operations
+pve node status --node pve1              # Node operations
+pve vm snapshot create --vmid 100        # VM operations
+pve vm bulk start                        # Bulk operations
+pve container list                       # Container operations
+```
+
+### For Development: Python Modular Tools
+- **`python/modular/snapshot-manager/`** - Comprehensive snapshot management
+- **`python/modular/vm-manager/`** - VM lifecycle & backup management
 
 ## ✨ Features
+
+### Go CLI (`pve`) - Production Ready
+Complete Proxmox VE cluster management with AWS-style command interface:
+
+#### Cluster Operations
+- **Task Management**: List and monitor cluster tasks
+- **Storage Operations**: List backup storage, manage volumes
+- **Network Management**: Query network configuration across nodes
+
+#### Node Operations
+- **Resource Monitoring**: CPU, memory, disk statistics
+- **Service Management**: Control system services
+- **Power Management**: Shutdown, reboot operations
+
+#### VM Operations
+- **Lifecycle**: Start, stop, shutdown, restart VMs
+- **Snapshots**: Create, list, rollback, delete snapshots
+- **Backups**: Create, list backups with storage selection
+- **Bulk Operations**:
+  - `pve vm bulk start` - Start all stopped VMs concurrently
+  - `pve vm bulk stop` - Stop all running VMs concurrently
+  - `pve vm bulk backup` - Backup all VMs concurrently
+
+#### Container Operations
+- **List & Manage**: Container lifecycle operations
 
 ### VM Manager (`python/modular/vm-manager/`)
 - **VM Lifecycle Management**: Start, stop, shutdown VMs with safety checks
@@ -56,7 +130,53 @@ Use the **Python modular implementations** in `python/modular/`:
 - **CLI & Interactive Modes**: Both command-line and interactive interfaces
 - **Production Ready**: Battle-tested modular architecture
 
+## 🛠️ Building from Source
+
+### Go Implementation
+```bash
+cd proxmox-admin-cli/
+
+# Build for current platform
+make build
+
+# Build for all platforms (Linux, Windows, macOS)
+make build-all
+
+# Run tests
+make test
+
+# Create release archives
+make release
+```
+
+### CI/CD Pipeline
+Automated builds and releases via GitHub Actions:
+
+- **Trigger**: Push any tag matching `v*` pattern
+- **Platforms**: Linux amd64, Windows amd64
+- **Output**: Pre-built binaries with SHA256 checksums
+- **Release**: Auto-created GitHub release with documentation
+
+**Create a new release:**
+```bash
+git tag -a v1.0.1 -m "Release v1.0.1 - Bug fixes"
+git push origin v1.0.1
+# GitHub Actions automatically builds and publishes
+```
+
 ## 🚀 Installation
+
+### Go CLI Installation
+
+**Option 1: Download Pre-built Binaries (Recommended)**
+
+See [Quick Start](#-quick-start) section above.
+
+**Option 2: Build from Source**
+
+See [Building from Source](#️-building-from-source) section above.
+
+### Python Tools Installation
 
 Following the **pipx (global tools) + uv (projects)** principle for clean and safe Python tool management.
 
@@ -135,7 +255,65 @@ The VM Manager now provides comprehensive backup operations with full CRUD capab
 
 ## 📖 Usage
 
-### VM Manager
+### Go CLI (`pve`)
+
+#### Cluster Operations
+```bash
+# List cluster tasks
+pve cluster task list
+
+# List backup storage
+pve cluster storage list-backup
+
+# List network configuration
+pve cluster network list --node pve1
+```
+
+#### Node Operations
+```bash
+# List all nodes
+pve node list
+
+# Show node status
+pve node status --node pve1
+
+# Show resource statistics
+pve node resource stats --node pve1
+```
+
+#### VM Operations
+```bash
+# List all VMs
+pve vm list
+
+# VM lifecycle
+pve vm start --vmid 100
+pve vm stop --vmid 100
+pve vm shutdown --vmid 100
+
+# Snapshots
+pve vm snapshot create --vmid 100 --prefix backup
+pve vm snapshot list --vmid 100
+pve vm snapshot rollback --vmid 100 --snapshot backup-20250117
+pve vm snapshot delete --vmid 100 --snapshot backup-20250117
+
+# Backups
+pve vm backup create --vmid 100 --storage local
+pve vm backup list --vmid 100
+
+# Bulk operations (concurrent processing)
+pve vm bulk start              # Start all stopped VMs
+pve vm bulk stop               # Stop all running VMs
+pve vm bulk backup --storage local  # Backup all VMs
+```
+
+#### Container Operations
+```bash
+# List containers
+pve container list
+```
+
+### Python VM Manager
 
 #### Global Usage (Recommended)
 ```bash
@@ -208,14 +386,45 @@ cd python/modular/
 
 ## 🔄 Migration Guide
 
-### From Legacy to Modular
-1. **Snapshot Operations**: Replace `legacy/pve_snapshots/` usage with `python/modular/snapshot-manager/`
-2. **VM Management**: Replace `legacy/proxmox-vm-manager/` usage with `python/modular/vm-manager/`
-3. **CLI Access**: Use `./pve-snapshots-cli.py` for convenient snapshot management
+### From Python to Go (Recommended for Production)
 
-### Benefits of Modular Approach
-- **Clean architecture** with separated concerns
-- **Better maintainability** and extensibility
-- **Production ready** with proven stability
-- **Consistent interfaces** across all tools
-- **Enhanced error handling** and validation
+**Performance Benefits**:
+- 5-10x faster execution
+- Lower memory footprint
+- Single binary deployment
+- Better concurrent operations
+
+**Command Migration**:
+```bash
+# Python (old)
+python3 main.py create --vmid 100 --prefix backup
+
+# Go (new - AWS-style)
+pve vm snapshot create --vmid 100 --prefix backup
+```
+
+**Breaking Changes (v1.0.0+)**:
+- Binary renamed: `proxmox-admin-cli` → `pve`
+- Command structure: AWS-style hierarchy
+  - `quick-start-all` → `pve vm bulk start`
+  - `quick-stop-all` → `pve vm bulk stop`
+  - `quick-backup-all` → `pve vm bulk backup`
+
+### From Legacy to Modular (Python)
+1. **Snapshot Operations**: `legacy/pve_snapshots/` → `python/modular/snapshot-manager/`
+2. **VM Management**: `legacy/proxmox-vm-manager/` → `python/modular/vm-manager/`
+3. **CLI Access**: Use `./pve-snapshots-cli.py` for snapshot management
+
+### Benefits Summary
+
+**Go Implementation**:
+- ⚡ 5-10x performance improvement
+- 📦 Zero runtime dependencies
+- 🔄 Automated CI/CD releases
+- 💪 Type safety and compile-time checks
+
+**Python Modular**:
+- 🧩 Clean architecture with separated concerns
+- 🔧 Better maintainability and extensibility
+- ✅ Production ready with proven stability
+- 🎯 Consistent interfaces across all tools
