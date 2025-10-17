@@ -46,11 +46,15 @@ Shows storage name, type, status, content types, and available space.`,
 	},
 }
 
-func init() {
+func initStorageCommands() {
 	// Add storage subcommands
 	storageCmd.AddCommand(listBackupStoragesCmd)
 	storageCmd.AddCommand(listVMStoragesCmd)
 
-	// Add storage command to root
-	rootCmd.AddCommand(storageCmd)
+	// Note: storageCmd is now added by cmd_cluster.go
+	// rootCmd.AddCommand(storageCmd)
 }
+
+// Rename for backwards compatibility
+var storageListBackupCmd = listBackupStoragesCmd
+var storageListVMCmd = listVMStoragesCmd

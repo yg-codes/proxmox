@@ -238,7 +238,8 @@ var resourceHistoryCmd = &cobra.Command{
 }
 
 func initResourceCommands() {
-	rootCmd.AddCommand(resourceCmd)
+	// Note: resourceCmd is now added by cmd_node.go
+	// rootCmd.AddCommand(resourceCmd)
 
 	resourceCmd.AddCommand(resourceStatsCmd)
 	resourceCmd.AddCommand(resourceListCmd)

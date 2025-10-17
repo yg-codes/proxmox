@@ -175,7 +175,8 @@ var taskStopCmd = &cobra.Command{
 }
 
 func initTaskCommands() {
-	rootCmd.AddCommand(taskCmd)
+	// Note: taskCmd is now added by cmd_cluster.go
+	// rootCmd.AddCommand(taskCmd)
 
 	taskCmd.AddCommand(taskListCmd)
 	taskCmd.AddCommand(taskRunningCmd)

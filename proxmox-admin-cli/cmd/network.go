@@ -286,7 +286,8 @@ var firewallRulesCmd = &cobra.Command{
 }
 
 func initNetworkCommands() {
-	rootCmd.AddCommand(networkCmd)
+	// Note: networkCmd is now added by cmd_cluster.go
+	// rootCmd.AddCommand(networkCmd)
 
 	// Main network commands
 	networkCmd.AddCommand(networkListCmd)

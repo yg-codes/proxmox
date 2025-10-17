@@ -453,49 +453,23 @@ func init() {
 	quickBackupAllCmd.Flags().StringVar(&compressFlag, "compress", "zstd", "Compression: zstd, gzip, or lzo")
 	quickBackupAllCmd.MarkFlagRequired("storage")
 
-	// Add subcommands to snapshot command group
-	snapshotCmd.AddCommand(snapshotCreateCmd)
-	snapshotCmd.AddCommand(snapshotListCmd)
-	snapshotCmd.AddCommand(snapshotRollbackCmd)
-	snapshotCmd.AddCommand(snapshotDeleteCmd)
-
-	// Add subcommands to VM command group
-	vmCmd.AddCommand(vmStartCmd)
-	vmCmd.AddCommand(vmStopCmd)
-	vmCmd.AddCommand(vmShutdownCmd)
-	vmCmd.AddCommand(vmListCmd)
-	vmCmd.AddCommand(vmDetailsCmd)
-
-	// Add subcommands to backup command group
-	backupCmd.AddCommand(backupCreateCmd)
-	backupCmd.AddCommand(backupListCmd)
-	backupCmd.AddCommand(backupRestoreCmd)
-	backupCmd.AddCommand(backupDeleteCmd)
-
-	// Add command groups to root
-	rootCmd.AddCommand(snapshotCmd)
-	rootCmd.AddCommand(vmCmd)
-	rootCmd.AddCommand(backupCmd)
-
 	// Keep quick operations as top-level commands for convenience
 	rootCmd.AddCommand(quickStartAllCmd)
 	rootCmd.AddCommand(quickStopAllCmd)
 	rootCmd.AddCommand(quickBackupAllCmd)
 
-	// Initialize node commands
-	initNodeCommands()
+	// Initialize new command hierarchy (following NEW_PLAN.md)
+	// cluster (task, storage, network)
+	initClusterCommands()
 
-	// Initialize task commands
-	initTaskCommands()
+	// node (resource)
+	initNodeRootCommands()
 
-	// Initialize resource commands
-	initResourceCommands()
+	// vm (snapshot, backup, start, stop, shutdown, list, details)
+	initVMRootCommands()
 
-	// Initialize container commands
+	// container (top-level)
 	initContainerCommands()
-
-	// Initialize network commands
-	initNetworkCommands()
 }
 
 func main() {

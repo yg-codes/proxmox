@@ -52,9 +52,29 @@ make clean          # Remove build artifacts
 make docker-build
 make docker-run ARGS='--help'
 
-# Direct usage (after build)
+# Direct usage (after build) - NEW AWS-STYLE COMMAND STRUCTURE
 ./build/proxmox-admin-cli --help
-./build/proxmox-admin-cli create --vmid 7303 --prefix backup
+
+# Cluster commands (task, storage, network)
+./build/proxmox-admin-cli cluster task list
+./build/proxmox-admin-cli cluster storage list-backup
+./build/proxmox-admin-cli cluster network list --node pve1
+
+# Node commands (resource monitoring, services, power)
+./build/proxmox-admin-cli node list
+./build/proxmox-admin-cli node status --node pve1
+./build/proxmox-admin-cli node resource stats --node pve1
+
+# VM commands (snapshot, backup, lifecycle)
+./build/proxmox-admin-cli vm list
+./build/proxmox-admin-cli vm snapshot create --vmid 7303 --prefix backup
+./build/proxmox-admin-cli vm snapshot list --vmid 7303
+./build/proxmox-admin-cli vm backup create --vmid 7303 --storage local
+./build/proxmox-admin-cli vm start --vmid 7303
+
+# Container commands (top-level)
+./build/proxmox-admin-cli container list
+./build/proxmox-admin-cli container create --name test-ct
 ```
 
 ### Python Modular Implementation
@@ -250,21 +270,30 @@ proxmox-admin-cli/
 2. Replace `legacy/proxmox-vm-manager/` with `modular/vm-manager/`
 3. Use `./pve-snapshots-cli.py` for convenient snapshot management
 
-### Python → Go (Drop-in Replacement)
+### Python → Go (AWS-Style Command Structure)
 ```bash
-# Python version
+# Python version (flat structure)
 python3 main.py create --vmid 7303 --prefix backup
+python3 main.py backup --vmid 7303 --storage local
 
-# Go version (identical CLI)
-proxmox-admin-cli snapshot create --vmid 7303 --prefix backup
+# Go version (AWS-style hierarchy)
+proxmox-admin-cli vm snapshot create --vmid 7303 --prefix backup
+proxmox-admin-cli vm backup create --vmid 7303 --storage local
+
+# Note: The Go version uses nested commands similar to AWS CLI:
+# - cluster (task, storage, network)
+# - node (resource, services, power)
+# - vm (snapshot, backup, lifecycle)
+# - container (top-level)
 ```
 
 **Migration Benefits:**
-- Same CLI interface and functionality
+- AWS CLI-style command organization
 - 5-10x performance improvement
 - Single binary deployment (no Python environment)
 - Compile-time error detection
 - Superior concurrency handling
+- Better command discoverability with logical grouping
 
 ## Common Issues
 
@@ -294,3 +323,4 @@ make release        # Creates tar.gz/zip archives in build/release/
 - Windows: amd64
 
 Note: Per user preferences, only Linux (amd64) and Windows builds are typically needed to save storage.
+- as of now, you can only test vm operation on VMID:7303, other test need my approval.

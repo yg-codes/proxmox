@@ -296,7 +296,8 @@ var nodeVersionCmd = &cobra.Command{
 }
 
 func initNodeCommands() {
-	rootCmd.AddCommand(nodeCmd)
+	// Note: nodeCmd is now added by main.go as the top-level 'node' command
+	// rootCmd.AddCommand(nodeCmd)
 
 	nodeCmd.AddCommand(nodeListCmd)
 	nodeCmd.AddCommand(nodeStatusCmd)
