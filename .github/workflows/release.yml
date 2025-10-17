@@ -1,0 +1,136 @@
+name: Build and Release Go Binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.22'
+
+permissions:
+  contents: write
+
+jobs:
+  build-pve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build binaries
+        run: |
+          cd proxmox-admin-cli
+          mkdir -p dist
+
+          echo "Building for Linux amd64..."
+          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-linux-amd64 ./cmd
+
+          echo "Building for Windows amd64..."
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-windows-amd64.exe ./cmd
+
+          echo "Generating checksums..."
+          cd dist
+          sha256sum pve-* > checksums.sha256
+          cat checksums.sha256
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            proxmox-admin-cli/dist/pve-linux-amd64
+            proxmox-admin-cli/dist/pve-windows-amd64.exe
+            proxmox-admin-cli/dist/checksums.sha256
+          body: |
+            ## Release ${{ github.ref_name }}
+
+            Proxmox Virtual Environment Administration CLI - AWS-style command interface for managing Proxmox VE clusters.
+
+            ### ✨ Features
+
+            - **AWS-Style Command Structure**: Hierarchical commands (cluster/node/vm/container)
+            - **VM Management**: Snapshot, backup, lifecycle, and bulk operations
+            - **Cluster Operations**: Task monitoring, storage, and network management
+            - **Node Operations**: Resource monitoring, services, and power management
+            - **Performance**: 5-10x faster than Python implementation with goroutine-based concurrency
+            - **Single Binary**: No runtime dependencies required
+
+            ### 📦 Installation
+
+            **Linux (amd64)**
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-amd64
+            sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
+            pve --version
+            ```
+
+            **Windows (amd64)**
+            1. Download `pve-windows-amd64.exe`
+            2. Rename to `pve.exe`
+            3. Add to PATH
+            ```powershell
+            pve.exe --version
+            ```
+
+            ### 🔐 Verification
+
+            ```bash
+            sha256sum -c checksums.sha256
+            ```
+
+            ### ⚙️ Configuration
+
+            Set environment variables for authentication:
+            ```bash
+            export PVE_HOST=proxmox-host.com
+            export PVE_USER=username@pam
+            export PVE_TOKEN_NAME=token-name
+            export PVE_TOKEN_VALUE=token-value
+            ```
+
+            ### 🚀 Quick Start
+
+            ```bash
+            # Cluster operations
+            pve cluster task list
+            pve cluster storage list-backup
+            pve cluster network list --node pve1
+
+            # Node operations
+            pve node list
+            pve node status --node pve1
+            pve node resource stats --node pve1
+
+            # VM operations
+            pve vm list
+            pve vm snapshot create --vmid 100 --prefix backup
+            pve vm snapshot list --vmid 100
+            pve vm backup create --vmid 100 --storage local
+
+            # VM bulk operations (all VMs at once)
+            pve vm bulk start              # Start all stopped VMs
+            pve vm bulk stop               # Stop all running VMs
+            pve vm bulk backup --storage local  # Backup all VMs
+
+            # Container operations
+            pve container list
+            ```
+
+            ### 📚 Documentation
+
+            See the [README](https://github.com/${{ github.repository }}) for complete documentation.
+
+            ### 🔄 Breaking Changes (v1.0.0+)
+
+            - Binary renamed: `proxmox-admin-cli` → `pve`
+            - Command structure changed to AWS-style hierarchy
+            - Quick commands moved: `quick-start-all` → `pve vm bulk start`
