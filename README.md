@@ -160,26 +160,6 @@ Complete Proxmox VE cluster management with AWS-style command interface:
 #### Container Operations
 - **List & Manage**: Container lifecycle operations
 
-### VM Manager (`python/modular/vm-manager/`)
-- **VM Lifecycle Management**: Start, stop, shutdown VMs with safety checks
-- **Complete Backup Management**: Create, list, restore, and delete VM backups with multiple modes
-  - Individual backup deletion with progress tracking
-  - Pattern-based deletion with wildcard support (e.g., '*2024*')
-  - Automated cleanup with retention policies
-  - Bulk operations with concurrent processing
-- **Storage Management**: List and validate storage options
-- **Snapshot Integration**: Full snapshot management capabilities
-- **Bulk Operations**: Concurrent operations on multiple VMs
-- **CLI & Interactive Modes**: Both command-line and interactive interfaces
-
-### Snapshot Manager (`python/modular/snapshot-manager/`)
-- **Complete Snapshot Lifecycle**: Create, list, rollback, and delete snapshots
-- **Flexible Naming**: Prefix-based or exact snapshot naming
-- **VM State Support**: Optional inclusion of VM RAM state
-- **Bulk Operations**: Manage snapshots across multiple VMs
-- **CLI & Interactive Modes**: Both command-line and interactive interfaces
-- **Production Ready**: Battle-tested modular architecture
-
 ## 🛠️ Building from Source
 
 ### Go Implementation
@@ -434,50 +414,53 @@ cd python/modular/
 ./pve-snapshots-cli.py
 ```
 
-## 🔄 Migration Guide
+## 🚀 Latest Release: v1.1.1
 
-### From Python to Go (Recommended for Production)
+**Released December 2025** - Multi-platform support with Python deprecation
 
-**Performance Benefits**:
-- 5-10x faster execution
-- Lower memory footprint
-- Single binary deployment
-- Better concurrent operations
+### New Features
+- ✅ **Multi-platform builds**: Linux (amd64/arm64), macOS (Intel/ARM), Windows (amd64)
+- ✅ **Python deprecation**: Official deprecation of Python implementation
+- ✅ **Enhanced documentation**: Complete feature parity analysis
+- ✅ **Improved downloads**: Fixed download commands with `curl`
 
-**Command Migration**:
+### Quick Install v1.1.1
+
+**Linux:**
 ```bash
-# Python (old)
-python3 main.py create --vmid 100 --prefix backup
+# Linux amd64
+curl -LO https://github.com/yg-codes/proxmox/releases/download/v1.1.1/pve-linux-amd64
+sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
 
-# Go (new - AWS-style)
-pve vm snapshot create --vmid 100 --prefix backup
+# Linux arm64
+curl -LO https://github.com/yg-codes/proxmox/releases/download/v1.1.1/pve-linux-arm64
+sudo install -m 755 pve-linux-arm64 /usr/local/bin/pve
 ```
 
-**Breaking Changes (v1.0.0+)**:
-- Binary renamed: `proxmox-admin-cli` → `pve`
-- Command structure: AWS-style hierarchy
-  - `quick-start-all` → `pve vm bulk start`
-  - `quick-stop-all` → `pve vm bulk stop`
-  - `quick-backup-all` → `pve vm bulk backup`
+**macOS:**
+```bash
+# Intel Macs
+curl -LO https://github.com/yg-codes/proxmox/releases/download/v1.1.1/pve-darwin-amd64
+sudo install -m 755 pve-darwin-amd64 /usr/local/bin/pve
 
-### From Legacy to Modular (Python)
-1. **Snapshot Operations**: `legacy/pve_snapshots/` → `python/modular/snapshot-manager/`
-2. **VM Management**: `legacy/proxmox-vm-manager/` → `python/modular/vm-manager/`
-3. **CLI Access**: Use `./pve-snapshots-cli.py` for snapshot management
+# Apple Silicon
+curl -LO https://github.com/yg-codes/proxmox/releases/download/v1.1.1/pve-darwin-arm64
+sudo install -m 755 pve-darwin-arm64 /usr/local/bin/pve
+```
 
-### Benefits Summary
+### Migration from Python
 
-**Go Implementation**:
-- ⚡ 5-10x performance improvement
-- 📦 Zero runtime dependencies
-- 🔄 Automated CI/CD releases
-- 💪 Type safety and compile-time checks
+For complete migration instructions and command translation, see:
+- [PYTHON_DEPRECATION_ANALYSIS.md](PYTHON_DEPRECATION_ANALYSIS.md) - Detailed analysis
+- [python/DEPRECATED.md](python/DEPRECATED.md) - Quick migration guide
 
-**Python Modular**:
-- 🧩 Clean architecture with separated concerns
-- 🔧 Better maintainability and extensibility
-- ✅ Production ready with proven stability
-- 🎯 Consistent interfaces across all tools
+**Quick command reference:**
+| Python Tool | Go Command |
+|-------------|------------|
+| `pve-snapshot-manager create` | `pve vm snapshot create` |
+| `pve-vm-manager-modular backup` | `pve vm backup create` |
+| `pve-vm-manager-modular start` | `pve vm start` |
+| See deprecation analysis for full list |
 
 ## 📄 License
 
