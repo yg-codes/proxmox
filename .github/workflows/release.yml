@@ -35,6 +35,15 @@ jobs:
           echo "Building for Linux amd64..."
           GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-linux-amd64 ./cmd
 
+          echo "Building for Linux arm64..."
+          GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-linux-arm64 ./cmd
+
+          echo "Building for macOS amd64 (Intel)..."
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-darwin-amd64 ./cmd
+
+          echo "Building for macOS arm64 (Apple Silicon)..."
+          GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-darwin-arm64 ./cmd
+
           echo "Building for Windows amd64..."
           GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/pve-windows-amd64.exe ./cmd
 
@@ -48,6 +57,9 @@ jobs:
         with:
           files: |
             proxmox-admin-cli/dist/pve-linux-amd64
+            proxmox-admin-cli/dist/pve-linux-arm64
+            proxmox-admin-cli/dist/pve-darwin-amd64
+            proxmox-admin-cli/dist/pve-darwin-arm64
             proxmox-admin-cli/dist/pve-windows-amd64.exe
             proxmox-admin-cli/dist/checksums.sha256
           body: |
@@ -70,6 +82,27 @@ jobs:
             ```bash
             wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-amd64
             sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
+            pve --version
+            ```
+
+            **Linux (arm64)**
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-arm64
+            sudo install -m 755 pve-linux-arm64 /usr/local/bin/pve
+            pve --version
+            ```
+
+            **macOS (Intel)**
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-darwin-amd64
+            sudo install -m 755 pve-darwin-amd64 /usr/local/bin/pve
+            pve --version
+            ```
+
+            **macOS (Apple Silicon)**
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-darwin-arm64
+            sudo install -m 755 pve-darwin-arm64 /usr/local/bin/pve
             pve --version
             ```
 
