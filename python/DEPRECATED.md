@@ -57,7 +57,7 @@ pve vm backup create --vmid 7303 --storage local
 
 **Linux:**
 ```bash
-wget https://github.com/yg-codes/proxmox/releases/latest/download/pve-linux-amd64
+curl -LO https://github.com/yg-codes/proxmox/releases/latest/download/pve-linux-amd64
 sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
 pve --version
 ```
@@ -71,11 +71,11 @@ pve --version
 **macOS:**
 ```bash
 # Intel Macs
-wget https://github.com/yg-codes/proxmox/releases/latest/download/pve-darwin-amd64
+curl -LO https://github.com/yg-codes/proxmox/releases/latest/download/pve-darwin-amd64
 sudo install -m 755 pve-darwin-amd64 /usr/local/bin/pve
 
 # Apple Silicon
-wget https://github.com/yg-codes/proxmox/releases/latest/download/pve-darwin-arm64
+curl -LO https://github.com/yg-codes/proxmox/releases/latest/download/pve-darwin-arm64
 sudo install -m 755 pve-darwin-arm64 /usr/local/bin/pve
 ```
 

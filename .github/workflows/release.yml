@@ -80,28 +80,28 @@ jobs:
 
             **Linux (amd64)**
             ```bash
-            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-amd64
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-amd64
             sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
             pve --version
             ```
 
             **Linux (arm64)**
             ```bash
-            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-arm64
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-linux-arm64
             sudo install -m 755 pve-linux-arm64 /usr/local/bin/pve
             pve --version
             ```
 
             **macOS (Intel)**
             ```bash
-            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-darwin-amd64
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-darwin-amd64
             sudo install -m 755 pve-darwin-amd64 /usr/local/bin/pve
             pve --version
             ```
 
             **macOS (Apple Silicon)**
             ```bash
-            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-darwin-arm64
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/pve-darwin-arm64
             sudo install -m 755 pve-darwin-arm64 /usr/local/bin/pve
             pve --version
             ```

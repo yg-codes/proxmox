@@ -36,7 +36,7 @@ proxmox/
 **Linux (amd64)**
 ```bash
 # Download latest release
-wget https://github.com/yg-codes/proxmox/releases/latest/download/pve-linux-amd64
+curl -LO https://github.com/yg-codes/proxmox/releases/latest/download/pve-linux-amd64
 sudo install -m 755 pve-linux-amd64 /usr/local/bin/pve
 pve --version
 ```
