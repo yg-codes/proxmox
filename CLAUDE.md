@@ -9,6 +9,13 @@ This repository provides comprehensive Proxmox VE management tools in two implem
 1. **Go Implementation** (Recommended for production): High-performance, single-binary admin CLI
 2. **Python Modular** (Stable): Clean architecture with VM and snapshot management
 
+### Requirements
+
+- **Go**: Version 1.21 or higher (for Go implementation)
+- **Python**: Version 3.8 or higher (for Python implementation)
+- **Package Managers**: `uv` (Python), `pipx` (Python CLI tools)
+- **OS**: Linux, macOS, or Windows (WSL supported)
+
 ## Directory Structure
 
 ```
@@ -19,6 +26,35 @@ proxmox/
         ├── snapshot-manager/       # Modular snapshot management
         ├── vm-manager/             # Modular VM & backup management
         └── pve-snapshots-cli.py    # CLI wrapper
+```
+
+## Quick Reference
+
+### One-Liner Quality Checks
+
+**Go (Complete Check)**:
+```bash
+cd proxmox-admin-cli/ && make fmt && make vet && make test && make build
+```
+
+**Python (Complete Check)**:
+```bash
+black . && flake8 . && mypy .
+```
+
+### Common Tasks
+```bash
+# Build Go binary
+cd proxmox-admin-cli/ && make build
+
+# Test Go CLI
+./build/pve vm list
+
+# Run Python tool (development)
+cd python/modular/snapshot-manager/ && uv run python main.py --help
+
+# Create new release
+git tag -a v1.0.1 -m "Release v1.0.1" && git push origin v1.0.1
 ```
 
 ## Development Commands
@@ -233,28 +269,78 @@ proxmox-admin-cli/
 
 ### Go
 - Follow standard Go conventions
-- Use `gofmt` for formatting
-- Run `go vet` before commits
-- Use `golangci-lint` for comprehensive linting
+- Use `gofmt` for formatting (via `make fmt`)
+- Run `go vet` before commits (via `make vet`)
+- Use `golangci-lint` for comprehensive linting (via `make lint`)
 - Explicit error handling (no exceptions)
 - Use context for cancellation and timeouts
+- 2-space indentation (standard Go formatting)
+- Descriptive variable names (no hardcoded values)
 
 ### Python
-- Python 3.8+ with type hints
+- Python 3.8+ with type hints (mandatory)
 - Black formatter (88-character line limit)
-- PEP 8 compliance
+- PEP 8 compliance (enforced via `flake8`)
 - Comprehensive docstrings for public methods
 - Custom `ProxmoxAPIError` exception
 - Explicit error handling patterns
+- 4-space indentation (Python standard)
+- Descriptive variable names (no hardcoded values)
 
-## Testing Considerations
+### Git Conventions (GitHub Repository)
 
+**Commit Messages**:
+- Clear, descriptive commit messages
+- **No ticket ID required** (this is a GitHub repository, not GitLab)
+- **Do NOT include** Claude Code attribution:
+  ```
+  # NEVER INCLUDE:
+  🤖 Generated with [Claude Code](https://claude.ai/code)
+  Co-Authored-By: Claude <noreply@anthropic.com>
+  ```
+
+**Branching**:
+- Main branch: `main`
+- Standard GitHub workflow (feature branches, pull requests)
+- No special naming conventions required
+
+**.gitignore Rules**:
+- Always ignore `claude` and `.trae` directories
+- Build artifacts (`build/`, `dist/`)
+- Environment files (`.env`)
+- Python artifacts (`__pycache__/`, `*.pyc`)
+- Go artifacts (`*.test`, `coverage.out`)
+
+## Testing & Safety
+
+### Testing Environment
 - **Go**: Use standard `go test`, coverage with `make test-coverage`
 - **Python**: Use pytest (if tests present)
 - Both require live Proxmox environment
-- Use development VM IDs for testing (avoid production)
 - Test API token permissions before bulk operations
 - Verify storage availability before backup operations
+
+### Testing Constraints (IMPORTANT)
+
+**Approved for Testing (No Approval Required)**:
+- VMID **7303 only** for VM operations
+- Read-only operations on any VM (list, status, info)
+- Cluster-level commands (task list, storage list, network list)
+- Node-level commands (node list, status, resource stats)
+
+**Requires Explicit Approval**:
+- Operations on VMs other than 7303
+- Destructive operations (delete, stop, shutdown) on any VM
+- Bulk operations affecting multiple VMs
+- Backup operations (creates data on storage)
+- Snapshot operations on non-7303 VMs
+
+**Testing Best Practices**:
+- Always verify API token permissions first
+- Check storage availability before backup operations
+- Validate VM lock status before operations
+- Use `--dry-run` flags when available
+- Test in development/test environments when possible
 
 ## Performance Benchmarks (Go vs Python)
 
@@ -301,12 +387,33 @@ pve vm backup create --vmid 7303 --storage local
 
 ## Common Issues
 
+### Go Build Issues
+- **"Go version too old"**: Ensure Go 1.21+ is installed (`go version`)
+- **"Package not found"**: Run `make deps` to download dependencies
+- **Build fails**: Try `make clean && make deps && make build`
+- **Cross-compilation errors**: Ensure correct GOOS/GOARCH for target platform
+
+### Python Issues
+- **"Module not found"**: Install with `pipx install` or use `uv run`
+- **"Python version too old"**: Ensure Python 3.8+ (`python3 --version`)
+- **Dependencies missing**: Run `uv sync` in module directory
+- **Type check failures**: Run `mypy .` to see specific issues
+
+### Proxmox API Issues
 - **"Permission check failed"**: Requires proper token ACL configuration
+  ```bash
+  pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
+  ```
 - **Network timeouts**: May require retry logic for bulk operations
 - **Storage space**: Validation prevents backup failures
 - **VM lock detection**: Prevents concurrent operation conflicts
-- **Go build errors**: Ensure Go 1.21+ is installed
-- **Python dependencies**: Use `uv sync` or `pip install requests urllib3`
+- **Connection refused**: Verify `PVE_HOST`, firewall, and SSL/TLS settings
+
+### CI/CD Issues
+- **Release not created**: Verify tag format starts with `v` (e.g., `v1.0.1`)
+- **Build fails in Actions**: Check Go version compatibility (workflow uses 1.22)
+- **Upload fails**: Verify `permissions: contents: write` in workflow
+- **Checksums missing**: Ensure `sha256sum` available in build environment
 
 ## Build and Release Process (Go)
 
@@ -322,9 +429,37 @@ make release        # Creates tar.gz/zip archives in build/release/
 ```
 
 ### Cross-compilation Targets
-- Linux: amd64, arm64
+- Linux: amd64 (primary), arm64
 - macOS: amd64 (Intel), arm64 (Apple Silicon)
 - Windows: amd64
 
-Note: Per user preferences, only Linux (amd64) and Windows builds are typically needed to save storage.
-- as of now, you can only test vm operation on VMID:7303, other test need my approval.
+**Build Priority**: Per user preferences, only **Linux (amd64)** and **Windows (amd64)** builds are needed for releases to save storage. The CI/CD pipeline builds only these two platforms.
+
+### CI/CD with GitHub Actions
+
+**Automated Release Process**:
+1. Push a tag matching `v*` pattern:
+   ```bash
+   git tag -a v1.0.1 -m "Release v1.0.1 - Bug fixes and improvements"
+   git push origin v1.0.1
+   ```
+
+2. GitHub Actions automatically:
+   - Builds Linux (amd64) and Windows (amd64) binaries
+   - Generates SHA256 checksums
+   - Creates GitHub release with binaries and documentation
+
+**Manual Emergency Release** (if GitHub Actions unavailable):
+```bash
+cd proxmox-admin-cli/
+make build-all
+make release
+# Upload manually via GitHub web UI or glab
+```
+
+**Troubleshooting CI/CD**:
+- Check workflow status: https://github.com/yg-codes/proxmox/actions
+- Verify tag format: Must start with `v` (e.g., `v1.0.1`)
+- Ensure Go version in workflow matches go.mod (1.22 in workflow, 1.21+ required)
+- Check build logs for compilation errors
+- Verify permissions for `GITHUB_TOKEN` (needs `contents: write`)
