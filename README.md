@@ -6,6 +6,8 @@ Comprehensive Proxmox VE management tools with AWS-style CLI interface and autom
 [![Build Status](https://img.shields.io/github/actions/workflow/status/yg-codes/proxmox/release.yml)](https://github.com/yg-codes/proxmox/actions)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/yg-codes/proxmox?filename=proxmox-admin-cli%2Fgo.mod)](https://github.com/yg-codes/proxmox)
 
+> **⚠️ DEPRECATION NOTICE**: The Python implementation (`python/modular/`) is deprecated as of December 2025. The Go implementation (`pve`) has achieved 100% feature parity with superior performance (5-10x faster). See [PYTHON_DEPRECATION_ANALYSIS.md](PYTHON_DEPRECATION_ANALYSIS.md) for details. All users should migrate to the Go CLI.
+
 ## 📁 Directory Structure
 
 ```
@@ -60,7 +62,7 @@ pve cluster task list
 
 ## 🚀 Recommended Usage
 
-### For Production: Go Implementation (`pve`)
+### For Production: Go Implementation (`pve`) ✅ RECOMMENDED
 **Binary name**: `pve` (AWS CLI-style naming)
 
 **Key Features**:
@@ -69,6 +71,8 @@ pve cluster task list
 - 🏗️ **AWS-style hierarchy**: `pve cluster|node|vm|container`
 - 🔄 **Automated releases** via GitHub Actions
 - 💪 **Production ready** with comprehensive error handling
+
+> **Note**: This is the only actively maintained implementation. The Python version is deprecated.
 
 **Command Structure**:
 ```bash
@@ -79,9 +83,11 @@ pve vm bulk start                        # Bulk operations
 pve container list                       # Container operations
 ```
 
-### For Development: Python Modular Tools
-- **`python/modular/snapshot-manager/`** - Comprehensive snapshot management
-- **`python/modular/vm-manager/`** - VM lifecycle & backup management
+### ~~For Development: Python Modular Tools~~ ⚠️ DEPRECATED
+- ~~**`python/modular/snapshot-manager/`** - Comprehensive snapshot management~~
+- ~~**`python/modular/vm-manager/`** - VM lifecycle & backup management~~
+
+**⚠️ DEPRECATED**: Python tools are no longer maintained. Use the Go implementation (`pve`) instead.
 
 ## ✨ Features
 
