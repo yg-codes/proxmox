@@ -8,6 +8,26 @@ Comprehensive Proxmox VE management tools with AWS-style CLI interface and autom
 
 > **⚠️ DEPRECATION NOTICE**: The Python implementation (`python/modular/`) is deprecated as of December 2025. The Go implementation (`pve`) has achieved 100% feature parity with superior performance (5-10x faster). See [PYTHON_DEPRECATION_ANALYSIS.md](PYTHON_DEPRECATION_ANALYSIS.md) for details. All users should migrate to the Go CLI.
 
+## 📋 Requirements
+
+### For Go CLI (Recommended)
+- **No runtime dependencies** - Single static binary
+- **Operating Systems**:
+  - Linux (amd64, arm64)
+  - macOS (Intel, Apple Silicon)
+  - Windows (amd64)
+
+### For Python Tools (Deprecated)
+- **Python**: Version 3.8 or higher
+- **Package Managers**: `uv` or `pipx`
+- **Dependencies**: `requests`, `urllib3`
+
+### Proxmox Environment
+- **Proxmox VE**: Version 6.x or higher (tested on 7.x)
+- **API Access**: Token-based authentication or username/password
+- **Permissions**: `PVEVMAdmin` role or equivalent
+- **Network**: HTTPS access to Proxmox API (default port 8006)
+
 ## 📁 Directory Structure
 
 ```
@@ -48,7 +68,12 @@ pve --version
 pve.exe --version
 ```
 
-### Configuration
+## ⚙️ Configuration
+
+### Environment Variables (Required)
+
+Both Go and Python implementations use the same authentication method:
+
 ```bash
 # Set environment variables
 export PVE_HOST=proxmox-host.com
@@ -59,6 +84,25 @@ export PVE_TOKEN_VALUE=token-value
 # Test connection
 pve cluster task list
 ```
+
+### API Token Setup
+
+Create an API token in Proxmox Web UI, then grant permissions:
+
+```bash
+# Grant required permissions to your API token (run on Proxmox server)
+pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
+```
+
+### Alternative: Password Authentication
+
+```bash
+export PVE_HOST=proxmox-host.com
+export PVE_USER=username@pam
+export PVE_PASSWORD=your-password
+```
+
+> **Note**: Token authentication is recommended for production use.
 
 ## 🚀 Recommended Usage
 
@@ -434,3 +478,44 @@ pve vm snapshot create --vmid 100 --prefix backup
 - 🔧 Better maintainability and extensibility
 - ✅ Production ready with proven stability
 - 🎯 Consistent interfaces across all tools
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+### MIT License
+
+```
+MIT License
+
+Copyright (c) 2025 Proxmox Management Tools
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📚 Additional Documentation
+
+- [PYTHON_DEPRECATION_ANALYSIS.md](PYTHON_DEPRECATION_ANALYSIS.md) - Detailed Python vs Go comparison
+- [CLAUDE.md](CLAUDE.md) - Development guidelines for contributors
+- [python/DEPRECATED.md](python/DEPRECATED.md) - Python migration guide
+- [proxmox-admin-cli/README.md](proxmox-admin-cli/README.md) - Go implementation details
