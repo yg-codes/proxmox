@@ -261,13 +261,13 @@ stateDiagram-v2
 flowchart TD
     START[Start] --> CHECK{VMID specified?}
     CHECK -->|No| ERROR[Error: --vmid required]
-    CHECK -->|Yes| RESOLVE[Resolve VM(s)]
+    CHECK -->|Yes| RESOLVE[Resolve VMs]
 
     RESOLVE --> NAMING{Naming mode?}
     NAMING -->|Prefix| GEN_NAME[Generate name with timestamp]
     NAMING -->|Exact name| USE_NAME[Use provided name]
 
-    GEN_NAME --> VALIDATE[Validate name length ≤40 chars]
+    GEN_NAME --> VALIDATE[Validate name max 40 chars]
     USE_NAME --> VALIDATE
 
     VALIDATE --> VMSTATE{Include VM state?}
