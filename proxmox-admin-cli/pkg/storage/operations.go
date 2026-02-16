@@ -67,7 +67,7 @@ func (ops *Operations) GetVMStorages() ([]*Storage, error) {
 		}
 
 		// API client wraps array responses in "items" key
-	storages, ok := storagesResp["items"].([]interface{})
+		storages, ok := storagesResp["items"].([]interface{})
 		if !ok {
 			continue
 		}
@@ -170,7 +170,7 @@ func (ops *Operations) GetBackupStorages() ([]*Storage, error) {
 		}
 
 		// API client wraps array responses in "items" key
-	storages, ok := storagesResp["items"].([]interface{})
+		storages, ok := storagesResp["items"].([]interface{})
 		if !ok {
 			continue
 		}

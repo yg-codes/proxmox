@@ -4,7 +4,19 @@
 Proxmox VM Snapshot Management Script (Modular Version)
 Main entry point for the modular snapshot management system
 
-Usage: 
+⚠️  DEPRECATED: This Python implementation is deprecated.
+   Please migrate to the Go implementation (proxmox-admin-cli) which is:
+   - 5-10x faster with goroutine-based concurrency
+   - Single binary with no runtime dependencies
+   - Memory efficient (~10-20MB vs ~50-100MB)
+   - Cross-platform (Linux, macOS, Windows)
+
+   Migration: Replace 'python3 main.py' with 'pve snapshot'
+   Example: 'pve snapshot create --vmid 7303 --prefix backup'
+
+   See: https://github.com/yg-codes/proxmox for the Go CLI.
+
+Usage:
   python3 main.py                           # Interactive mode
   python3 main.py create --vmid 7303 --prefix backup
   python3 main.py list --vmid 7303
@@ -23,6 +35,25 @@ Provides comprehensive VM snapshot management capabilities:
 import sys
 import argparse
 from snapshot_manager import ProxmoxSnapshotManager
+
+
+def print_deprecation_warning():
+    """Print deprecation warning at startup."""
+    print("\n" + "=" * 70)
+    print("⚠️  DEPRECATION WARNING")
+    print("=" * 70)
+    print("This Python CLI is DEPRECATED and will not receive new features.")
+    print("Please migrate to the Go CLI (proxmox-admin-cli) which is 5-10x faster.")
+    print()
+    print("Migration examples:")
+    print("  Old: python3 main.py create --vmid 7303 --prefix backup")
+    print("  New: pve snapshot create --vmid 7303 --prefix backup")
+    print()
+    print("  Old: python3 main.py list --vmid 7303")
+    print("  New: pve snapshot list --vmid 7303")
+    print()
+    print("See: https://github.com/yg-codes/proxmox")
+    print("=" * 70 + "\n")
 
 
 def parse_arguments():
@@ -305,6 +336,9 @@ def cmd_delete_snapshot(manager, args):
 
 def main():
     """Main entry point for the Proxmox Snapshot Manager."""
+    # Print deprecation warning
+    print_deprecation_warning()
+
     args = parse_arguments()
     manager = ProxmoxSnapshotManager()
     

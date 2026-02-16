@@ -2,6 +2,7 @@ package protection
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yg-codes/proxmox-admin-cli/pkg/api"
@@ -104,4 +105,49 @@ func (ops *Operations) SetProtection(vmid string, protect bool) error {
 	}
 
 	return nil
+}
+
+// CheckAndOfferDisable checks VM protection and offers to disable it
+// Returns: (isProtected, shouldProceed, error)
+// isProtected: true if VM was protected
+// shouldProceed: true if operation should proceed (either not protected or user chose to disable)
+func (ops *Operations) CheckAndOfferDisable(vmid string, operation string) (bool, bool, error) {
+	protected, err := ops.IsProtected(vmid)
+	if err != nil {
+		return false, false, err
+	}
+
+	if !protected {
+		return false, true, nil
+	}
+
+	fmt.Printf("\n⚠️  VM PROTECTION DETECTED\n")
+	fmt.Println(strings.Repeat("=", 50))
+	fmt.Printf("VM %s has protection mode enabled, which prevents:\n", vmid)
+	fmt.Println("  • VM deletion")
+	fmt.Println("  • Configuration changes")
+	fmt.Printf("  • %s operations\n", operation)
+	fmt.Println(strings.Repeat("=", 50))
+	fmt.Println()
+	fmt.Println("Options:")
+	fmt.Println("1. Disable protection and continue")
+	fmt.Println("2. Cancel operation")
+	fmt.Println()
+
+	fmt.Print("Select option (1-2): ")
+	var choice string
+	fmt.Scanln(&choice)
+	choice = strings.TrimSpace(choice)
+
+	if choice == "1" {
+		fmt.Printf("\n🔓 Disabling VM protection for %s...\n", vmid)
+		if err := ops.SetProtection(vmid, false); err != nil {
+			return true, false, fmt.Errorf("failed to disable protection: %w", err)
+		}
+		fmt.Println("✅ VM protection disabled successfully")
+		return true, true, nil
+	}
+
+	fmt.Println("Operation cancelled")
+	return true, false, nil
 }

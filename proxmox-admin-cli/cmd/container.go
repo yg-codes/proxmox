@@ -9,31 +9,31 @@ import (
 
 var (
 	// Container-specific flags
-	containerNodeFlag        string
-	containerStatusFlag      string
-	containerNameFlag        string
-	containerTemplateFlag    bool
-	containerVMIDFlag        int
-	containerOSTemplateFlag  string
-	containerHostnameFlag    string
-	containerDescriptionFlag string
-	containerPasswordFlag    string
-	containerSSHKeysFlag     string
-	containerStorageFlag     string
-	containerCPUsFlag        int
-	containerMemoryFlag      int64
-	containerSwapFlag        int64
-	containerDiskFlag        int64
-	containerNestingFlag     bool
+	containerNodeFlag         string
+	containerStatusFlag       string
+	containerNameFlag         string
+	containerTemplateFlag     bool
+	containerVMIDFlag         int
+	containerOSTemplateFlag   string
+	containerHostnameFlag     string
+	containerDescriptionFlag  string
+	containerPasswordFlag     string
+	containerSSHKeysFlag      string
+	containerStorageFlag      string
+	containerCPUsFlag         int
+	containerMemoryFlag       int64
+	containerSwapFlag         int64
+	containerDiskFlag         int64
+	containerNestingFlag      bool
 	containerUnprivilegedFlag bool
-	containerOnBootFlag      bool
-	containerProtectedFlag   bool
-	containerNewIDFlag       int
-	containerFullCloneFlag   bool
-	containerTargetNodeFlag  string
-	containerSnapshotFlag    string
-	containerPurgeFlag       bool
-	containerTimeoutFlag     int
+	containerOnBootFlag       bool
+	containerProtectedFlag    bool
+	containerNewIDFlag        int
+	containerFullCloneFlag    bool
+	containerTargetNodeFlag   string
+	containerSnapshotFlag     string
+	containerPurgeFlag        bool
+	containerTimeoutFlag      int
 )
 
 var containerCmd = &cobra.Command{

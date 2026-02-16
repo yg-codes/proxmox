@@ -9,18 +9,18 @@ import (
 
 var (
 	// Network-specific flags
-	networkNodeFlag      string
-	networkIfaceFlag     string
-	networkTypeFlag      string
-	networkActiveFlag    string
-	networkZoneFlag      string
+	networkNodeFlag        string
+	networkIfaceFlag       string
+	networkTypeFlag        string
+	networkActiveFlag      string
+	networkZoneFlag        string
 	networkBridgePortsFlag string
-	networkAddressFlag   string
-	networkNetmaskFlag   string
-	networkGatewayFlag   string
-	networkCommentsFlag  string
-	networkAutostartFlag bool
-	networkVLANAwareFlag bool
+	networkAddressFlag     string
+	networkNetmaskFlag     string
+	networkGatewayFlag     string
+	networkCommentsFlag    string
+	networkAutostartFlag   bool
+	networkVLANAwareFlag   bool
 )
 
 var networkCmd = &cobra.Command{

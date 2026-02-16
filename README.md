@@ -150,12 +150,18 @@ Complete Proxmox VE cluster management with AWS-style command interface:
 
 #### VM Operations
 - **Lifecycle**: Start, stop, shutdown, restart VMs
-- **Snapshots**: Create, list, rollback, delete snapshots
-- **Backups**: Create, list backups with storage selection
+- **Snapshots**: Create, list, rollback, delete (multiple) snapshots
+- **Backups**: Create, list, restore backups with storage selection
+- **Storage-wide backup listing**: `pve backup list --all --storage <name>` (v1.2.0+)
+- **Protection handling**: Auto-detect and offer to disable VM protection on restore (v1.2.0+)
 - **Bulk Operations**:
   - `pve vm bulk start` - Start all stopped VMs concurrently
   - `pve vm bulk stop` - Stop all running VMs concurrently
   - `pve vm bulk backup` - Backup all VMs concurrently
+
+#### VM Selection (v1.2.0+)
+- **Checkbox-style selection**: Toggle VMs interactively with `all`/`none`/`done` commands
+- **Flexible patterns**: By ID, name, range (`7201-7205`), wildcard (`72*`), or keywords (`running`, `stopped`)
 
 #### Container Operations
 - **List & Manage**: Container lifecycle operations
@@ -326,10 +332,13 @@ pve vm snapshot create --vmid 100 --prefix backup
 pve vm snapshot list --vmid 100
 pve vm snapshot rollback --vmid 100 --snapshot backup-20250117
 pve vm snapshot delete --vmid 100 --snapshot backup-20250117
+pve vm snapshot delete --vmid 100 --snapshot snap1,snap2,snap3 -y  # Multiple snapshots
 
 # Backups
 pve vm backup create --vmid 100 --storage local
 pve vm backup list --vmid 100
+pve vm backup list --all --storage local  # List ALL backups in storage (v1.2.0+)
+pve vm backup restore --vmid 100 --backup-file "local:backup/..." --node pve1
 
 # Bulk operations (concurrent processing)
 pve vm bulk start              # Start all stopped VMs

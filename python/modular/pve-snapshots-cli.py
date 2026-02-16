@@ -2,6 +2,14 @@
 """
 Simple CLI wrapper for Proxmox snapshot management.
 
+⚠️  DEPRECATED: This Python implementation is deprecated.
+   Please migrate to the Go implementation (proxmox-admin-cli).
+
+   Migration: Replace 'pve-snapshot-manager' with 'pve snapshot'
+   Example: 'pve snapshot create --vmid 7303 --prefix backup'
+
+   See: https://github.com/yg-codes/proxmox for the Go CLI.
+
 This wrapper helps users choose between:
 1. Global installation via pipx (recommended)
 2. Local project usage via uv
@@ -20,16 +28,33 @@ import os
 import subprocess
 import shutil
 
+def print_deprecation_warning():
+    """Print deprecation warning."""
+    print("\n" + "=" * 70)
+    print("⚠️  DEPRECATION WARNING")
+    print("=" * 70)
+    print("This Python CLI is DEPRECATED and will not receive new features.")
+    print("Please migrate to the Go CLI (proxmox-admin-cli) which is 5-10x faster.")
+    print()
+    print("Migration examples:")
+    print("  Old: pve-snapshot-manager create --vmid 7303 --prefix backup")
+    print("  New: pve snapshot create --vmid 7303 --prefix backup")
+    print()
+    print("See: https://github.com/yg-codes/proxmox")
+    print("=" * 70 + "\n")
+
 def main():
     """Provide helpful guidance and fallback execution."""
-    
+    # Print deprecation warning
+    print_deprecation_warning()
+
     # Check if pve-snapshot-manager is globally available
     if shutil.which('pve-snapshot-manager'):
         print("✅ pve-snapshot-manager is globally installed!")
         print("Run: pve-snapshot-manager --help")
         print("For global usage, use 'pve-snapshot-manager' instead of this wrapper.")
         return 0
-    
+
     # If not globally available, show installation instructions
     print("📦 Proxmox Snapshot Management Setup")
     print("")

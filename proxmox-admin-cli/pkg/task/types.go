@@ -4,15 +4,15 @@ import "time"
 
 // Task represents a Proxmox task
 type Task struct {
-	UPID      string
-	Node      string
-	PID       int
-	PStart    int64
-	StartTime time.Time
-	Type      string
-	ID        string
-	User      string
-	Status    string
+	UPID       string
+	Node       string
+	PID        int
+	PStart     int64
+	StartTime  time.Time
+	Type       string
+	ID         string
+	User       string
+	Status     string
 	ExitStatus string
 
 	// Progress tracking

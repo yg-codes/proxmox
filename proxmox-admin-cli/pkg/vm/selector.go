@@ -90,7 +90,7 @@ func (s *Selector) ParseVMSelection(selection string, allVMs []*VM) (*SelectionR
 
 	// Handle special keywords
 	switch strings.ToLower(selection) {
-	case "all":
+	case "all", "*":
 		result.VMs = allVMs
 		for _, vm := range allVMs {
 			result.Matched = append(result.Matched, vm.VMID)
@@ -110,6 +110,17 @@ func (s *Selector) ParseVMSelection(selection string, allVMs []*VM) (*SelectionR
 				result.VMs = append(result.VMs, vm)
 				result.Matched = append(result.Matched, vm.VMID)
 			}
+		}
+		return result, nil
+	case "i", "interactive":
+		// Trigger interactive checkbox selection
+		vms, err := s.CheckboxSelect(allVMs, "Select VMs:")
+		if err != nil {
+			return result, err
+		}
+		result.VMs = vms
+		for _, vm := range vms {
+			result.Matched = append(result.Matched, vm.VMID)
 		}
 		return result, nil
 	}
@@ -423,4 +434,144 @@ func (s *Selector) DisplayVMInfo(vms []*VM) {
 		}
 		fmt.Println()
 	}
+}
+
+// CheckboxSelect provides a checkbox-style interactive VM selection interface
+// This allows users to toggle selections, select all/none, and see current state
+func (s *Selector) CheckboxSelect(allVMs []*VM, prompt string) ([]*VM, error) {
+	if len(allVMs) == 0 {
+		return nil, fmt.Errorf("no VMs available")
+	}
+
+	fmt.Printf("\n%s\n", prompt)
+	fmt.Println("📋 Checkbox-style VM Selection")
+	fmt.Println(strings.Repeat("=", 50))
+	fmt.Println("Enter VM numbers to toggle selection (space-separated)")
+	fmt.Println("Commands: 'all' (select all), 'none' (clear all), 'done' (finish)")
+	fmt.Println()
+
+	// Sort VMs by ID for consistent display
+	sortedVMs := make([]*VM, len(allVMs))
+	copy(sortedVMs, allVMs)
+	sort.Slice(sortedVMs, func(i, j int) bool {
+		return sortedVMs[i].VMID < sortedVMs[j].VMID
+	})
+
+	// Track selected VMs using a map for O(1) lookup
+	selectedSet := make(map[string]bool)
+	// Track order of selection for consistent output
+	var selectedVMs []*VM
+
+	// Use a bufio reader for better input handling
+	reader := strings.Builder{}
+
+	for {
+		// Display VMs with selection status
+		fmt.Println("\nAvailable VMs:")
+		fmt.Printf("%-3s %-3s %-8s %-25s %-15s\n", "#", "✓", "VM ID", "Name", "Status")
+		fmt.Println(strings.Repeat("-", 60))
+
+		for i, vm := range sortedVMs {
+			selected := " "
+			if selectedSet[vm.VMID] {
+				selected = "✓"
+			}
+			status := "🟢 running"
+			if !vm.Running {
+				status = "🔴 stopped"
+			}
+			name := vm.Name
+			if len(name) > 24 {
+				name = name[:24]
+			}
+			fmt.Printf("%-3d %-3s %-8s %-25s %-15s\n", i+1, selected, vm.VMID, name, status)
+		}
+
+		fmt.Printf("\nSelected: %d VMs\n", len(selectedSet))
+		fmt.Print("\nEnter selection (numbers, 'all', 'none', 'done'): ")
+
+		// Read input
+		var input string
+		fmt.Scanln(&input)
+		input = strings.TrimSpace(strings.ToLower(input))
+
+		if input == "done" {
+			break
+		} else if input == "all" {
+			// Select all VMs
+			selectedSet = make(map[string]bool)
+			selectedVMs = make([]*VM, 0)
+			for _, vm := range sortedVMs {
+				selectedSet[vm.VMID] = true
+				selectedVMs = append(selectedVMs, vm)
+			}
+			fmt.Printf("✅ Selected all %d VMs\n", len(selectedSet))
+		} else if input == "none" {
+			// Clear all selections
+			selectedSet = make(map[string]bool)
+			selectedVMs = make([]*VM, 0)
+			fmt.Println("✅ Cleared all selections")
+		} else {
+			// Parse numbers (space-separated)
+			numbers := strings.Fields(input)
+			for _, numStr := range numbers {
+				num, err := strconv.Atoi(numStr)
+				if err != nil {
+					fmt.Printf("⚠️  Invalid input: %s\n", numStr)
+					continue
+				}
+
+				if num < 1 || num > len(sortedVMs) {
+					fmt.Printf("⚠️  Invalid number: %d (valid range: 1-%d)\n", num, len(sortedVMs))
+					continue
+				}
+
+				vm := sortedVMs[num-1]
+				if selectedSet[vm.VMID] {
+					// Deselect
+					delete(selectedSet, vm.VMID)
+					// Remove from slice
+					for i, v := range selectedVMs {
+						if v.VMID == vm.VMID {
+							selectedVMs = append(selectedVMs[:i], selectedVMs[i+1:]...)
+							break
+						}
+					}
+					fmt.Printf("✅ Deselected VM %s\n", vm.VMID)
+				} else {
+					// Select
+					selectedSet[vm.VMID] = true
+					selectedVMs = append(selectedVMs, vm)
+					fmt.Printf("✅ Selected VM %s\n", vm.VMID)
+				}
+			}
+		}
+
+		// Reset reader for next iteration
+		reader.Reset()
+	}
+
+	// Return selected VMs in selection order
+	return selectedVMs, nil
+}
+
+// DisplaySelectionHelp shows help for VM selection formats
+func (s *Selector) DisplaySelectionHelp() {
+	fmt.Println("\n📚 VM Selection Help")
+	fmt.Println(strings.Repeat("=", 40))
+	fmt.Println("Selection formats:")
+	fmt.Println("  *                    - All VMs")
+	fmt.Println("  running              - All running VMs")
+	fmt.Println("  stopped              - All stopped VMs")
+	fmt.Println("  7201-7205            - Range of VM IDs")
+	fmt.Println("  7201,7203            - VM IDs (comma-separated)")
+	fmt.Println("  web01,db01           - VM names (comma-separated)")
+	fmt.Println("  7201,web01           - Mixed IDs and names")
+	fmt.Println("  72*                  - Pattern matching VM IDs")
+	fmt.Println("  web*                 - Pattern matching VM names")
+	fmt.Println("  *server*             - Pattern matching (contains)")
+	fmt.Println("  i / interactive      - Interactive checkbox selection")
+	fmt.Println("  7201                 - Single VM ID")
+	fmt.Println("  web-server-01        - Single VM name")
+	fmt.Println()
 }

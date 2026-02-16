@@ -4,7 +4,19 @@
 Proxmox VM Management Script (Modular Version)
 Main entry point for the modular VM management system
 
-Usage: 
+⚠️  DEPRECATED: This Python implementation is deprecated.
+   Please migrate to the Go implementation (proxmox-admin-cli) which is:
+   - 5-10x faster with goroutine-based concurrency
+   - Single binary with no runtime dependencies
+   - Memory efficient (~10-20MB vs ~50-100MB)
+   - Cross-platform (Linux, macOS, Windows)
+
+   Migration: Replace 'python3 main.py' with 'pve vm' or 'pve backup'
+   Example: 'pve vm start --vmid 7303' or 'pve backup create --vmid 7303 --storage local'
+
+   See: https://github.com/yg-codes/proxmox for the Go CLI.
+
+Usage:
   python3 main.py                           # Interactive mode
   python3 main.py start --vmid 7303
   python3 main.py stop --vmid 7303
@@ -25,6 +37,31 @@ import sys
 import argparse
 from vm_manager import ProxmoxVMManager
 from snapshot_integration import SnapshotIntegration
+
+
+def print_deprecation_warning():
+    """Print deprecation warning at startup."""
+    print("\n" + "=" * 70)
+    print("⚠️  DEPRECATION WARNING")
+    print("=" * 70)
+    print("This Python CLI is DEPRECATED and will not receive new features.")
+    print("Please migrate to the Go CLI (proxmox-admin-cli) which is 5-10x faster.")
+    print()
+    print("Migration examples:")
+    print("  Old: python3 main.py start --vmid 7303")
+    print("  New: pve vm start --vmid 7303")
+    print()
+    print("  Old: python3 main.py backup --vmid 7303 --storage local-zfs")
+    print("  New: pve backup create --vmid 7303 --storage local-zfs")
+    print()
+    print("  Old: python3 main.py list-backups --vmid 7303")
+    print("  New: pve backup list --vmid 7303")
+    print()
+    print("  Old: python3 main.py list-backups --all --storage local-zfs")
+    print("  New: pve backup list --all --storage local-zfs")
+    print()
+    print("See: https://github.com/yg-codes/proxmox")
+    print("=" * 70 + "\n")
 
 
 def parse_arguments():
@@ -543,6 +580,9 @@ def cmd_vm_details(manager, args):
 
 def main():
     """Main entry point for the Proxmox VM Manager."""
+    # Print deprecation warning
+    print_deprecation_warning()
+
     args = parse_arguments()
     manager = ProxmoxVMManager()
     

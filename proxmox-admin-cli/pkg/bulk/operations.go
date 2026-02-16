@@ -157,24 +157,24 @@ func (m *Manager) CreateSnapshots(ctx context.Context, vms []*vm.VM, nameOrPrefi
 	// Wait for all workers to complete
 	wg.Wait()
 	m.logger.Debugf("All create workers completed, results expected: %d", len(vms))
-	
+
 	// Wait for all results to be processed before closing channel
 	for {
 		m.mu.RLock()
 		resultCount := len(m.results)
 		m.mu.RUnlock()
-		
+
 		if resultCount >= len(vms) {
 			m.logger.Debugf("All results processed (%d/%d), closing channel", resultCount, len(vms))
 			break
 		}
-		
+
 		m.logger.Debugf("Waiting for results: %d/%d", resultCount, len(vms))
 		time.Sleep(50 * time.Millisecond)
 	}
-	
+
 	close(m.resultsChan)
-	
+
 	// Wait for progress monitor to finish processing all results
 	m.logger.Debugf("Waiting for progress monitor to finish...")
 	m.progressWG.Wait()
@@ -220,7 +220,7 @@ func (m *Manager) DeleteSnapshots(ctx context.Context, vms []*vm.VM, snapshotNam
 	// Wait for all workers to complete
 	wg.Wait()
 	close(m.resultsChan)
-	
+
 	// Wait for progress monitor to finish processing all results
 	m.progressWG.Wait()
 
@@ -264,7 +264,7 @@ func (m *Manager) RollbackSnapshots(ctx context.Context, vms []*vm.VM, snapshotN
 	// Wait for all workers to complete
 	wg.Wait()
 	close(m.resultsChan)
-	
+
 	// Wait for progress monitor to finish processing all results
 	m.progressWG.Wait()
 
@@ -308,7 +308,7 @@ func (m *Manager) StartVMs(ctx context.Context, vms []*vm.VM) error {
 	// Wait for all workers to complete
 	wg.Wait()
 	close(m.resultsChan)
-	
+
 	// Wait for progress monitor to finish processing all results
 	m.progressWG.Wait()
 
@@ -352,7 +352,7 @@ func (m *Manager) StopVMs(ctx context.Context, vms []*vm.VM) error {
 	// Wait for all workers to complete
 	wg.Wait()
 	close(m.resultsChan)
-	
+
 	// Wait for progress monitor to finish processing all results
 	m.progressWG.Wait()
 
@@ -514,7 +514,7 @@ func (m *Manager) stopVMWorker(ctx context.Context, wg *sync.WaitGroup, jobs <-c
 // progressMonitor monitors progress and collects results
 func (m *Manager) progressMonitor(total int) {
 	defer m.progressWG.Done()
-	
+
 	for result := range m.resultsChan {
 		m.mu.Lock()
 		m.results = append(m.results, result)
@@ -624,7 +624,7 @@ func (m *Manager) resetResults() {
 	for len(m.progressChan) > 0 {
 		<-m.progressChan
 	}
-	
+
 	// Reset the WaitGroup to ensure clean state
 	m.progressWG = sync.WaitGroup{}
 }

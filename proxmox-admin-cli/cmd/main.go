@@ -27,18 +27,18 @@ import (
 )
 
 var (
-	cfg         *config.Config
-	logger      *logrus.Logger
-	client      *api.Client
-	vmOps       *vm.Operations
-	vmSelector  *vm.Selector
-	snapOps     *snapshot.Operations
-	bulkMgr     *bulk.Manager
-	nodeOps     *node.Operations
-	taskOps     *task.Operations
-	resourceOps *resource.Operations
+	cfg          *config.Config
+	logger       *logrus.Logger
+	client       *api.Client
+	vmOps        *vm.Operations
+	vmSelector   *vm.Selector
+	snapOps      *snapshot.Operations
+	bulkMgr      *bulk.Manager
+	nodeOps      *node.Operations
+	taskOps      *task.Operations
+	resourceOps  *resource.Operations
 	containerOps *container.Operations
-	networkOps  *network.Operations
+	networkOps   *network.Operations
 
 	// Global flags
 	configPath  string
@@ -57,6 +57,7 @@ var (
 	patternFlag    string
 	keepCountFlag  int
 	maxAgeDaysFlag int
+	listAllFlag    bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -168,6 +169,9 @@ Examples:
   # Delete specific snapshot
   pve snapshot delete --vmid 7303 --snapshot backup-20240101-1200
 
+  # Delete multiple snapshots from VM
+  pve snapshot delete --vmid 7303 --snapshot snap1,snap2,snap3 -y
+
   # Delete all snapshots from VM
   pve snapshot delete --vmid 7303 --all -y
 
@@ -240,14 +244,17 @@ Examples:
 var backupListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List VM backups",
-	Long: `List all backups for specified VM(s).
+	Long: `List all backups for specified VM(s) or all backups in a storage.
 
 Examples:
   # List backups for single VM
   pve backup list --vmid 7303
 
   # List backups from specific storage
-  pve backup list --vmid 7303 --storage local-zfs`,
+  pve backup list --vmid 7303 --storage local-zfs
+
+  # List ALL backups in a storage (storage-wide overview)
+  pve backup list --all --storage local-zfs`,
 	RunE: runListBackupsCommand,
 }
 
@@ -342,7 +349,7 @@ func init() {
 
 	snapshotDeleteCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
 	snapshotDeleteCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
-	snapshotDeleteCmd.Flags().String("snapshot", "", "snapshot name to delete")
+	snapshotDeleteCmd.Flags().StringSlice("snapshot", []string{}, "snapshot name(s) to delete (comma-separated for multiple)")
 	snapshotDeleteCmd.Flags().Bool("all", false, "delete all snapshots")
 
 	// VM command flags
@@ -369,6 +376,7 @@ func init() {
 	backupListCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated)")
 	backupListCmd.Flags().StringSlice("vmname", []string{}, "VM names (comma-separated)")
 	backupListCmd.Flags().StringVar(&storageFlag, "storage", "", "Storage to check (optional, checks all if not specified)")
+	backupListCmd.Flags().BoolVar(&listAllFlag, "all", false, "List all backups in storage (requires --storage)")
 
 	backupRestoreCmd.Flags().StringSlice("vmid", []string{}, "VM IDs (comma-separated, typically one)")
 	backupRestoreCmd.Flags().StringVar(&backupFileFlag, "backup-file", "", "Backup volid (required)")
@@ -835,18 +843,18 @@ func runRollbackCommand(cmd *cobra.Command, args []string) error {
 func runDeleteCommand(cmd *cobra.Command, args []string) error {
 	vmids, _ := cmd.Flags().GetStringSlice("vmid")
 	vmnames, _ := cmd.Flags().GetStringSlice("vmname")
-	snapshotName, _ := cmd.Flags().GetString("snapshot")
+	snapshotNames, _ := cmd.Flags().GetStringSlice("snapshot")
 	deleteAll, _ := cmd.Flags().GetBool("all")
 
 	if len(vmids) == 0 && len(vmnames) == 0 {
 		return fmt.Errorf("either --vmid or --vmname must be specified")
 	}
 
-	if snapshotName == "" && !deleteAll {
+	if len(snapshotNames) == 0 && !deleteAll {
 		return fmt.Errorf("either --snapshot or --all must be specified")
 	}
 
-	if snapshotName != "" && deleteAll {
+	if len(snapshotNames) > 0 && deleteAll {
 		return fmt.Errorf("cannot specify both --snapshot and --all")
 	}
 
@@ -856,23 +864,14 @@ func runDeleteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Dry-run mode - just show what would happen
-	if dryRun {
-		printDryRunHeader()
-		for _, vmInstance := range vms {
-			if deleteAll {
-				printDryRunAction("delete all snapshots", vmInstance.VMID, vmInstance.Name, "")
-			} else {
-				printDryRunAction("delete snapshot", vmInstance.VMID, vmInstance.Name,
-					fmt.Sprintf("snapshot '%s'", snapshotName))
-			}
+	// Build snapshot description for messages
+	snapshotDesc := "all snapshots"
+	if len(snapshotNames) > 0 {
+		if len(snapshotNames) == 1 {
+			snapshotDesc = fmt.Sprintf("snapshot '%s'", snapshotNames[0])
+		} else {
+			snapshotDesc = fmt.Sprintf("%d snapshots: %s", len(snapshotNames), strings.Join(snapshotNames, ", "))
 		}
-		operation := "delete all snapshots"
-		if !deleteAll {
-			operation = fmt.Sprintf("delete snapshot '%s'", snapshotName)
-		}
-		printDryRunSummary(operation, len(vms))
-		return nil
 	}
 
 	// Dry-run mode - just show what would happen
@@ -882,27 +881,22 @@ func runDeleteCommand(cmd *cobra.Command, args []string) error {
 			if deleteAll {
 				printDryRunAction("delete all snapshots", vmInstance.VMID, vmInstance.Name, "")
 			} else {
-				printDryRunAction("delete snapshot", vmInstance.VMID, vmInstance.Name,
-					fmt.Sprintf("snapshot '%s'", snapshotName))
+				printDryRunAction("delete snapshot(s)", vmInstance.VMID, vmInstance.Name, snapshotDesc)
 			}
 		}
-		operation := "delete all snapshots"
-		if !deleteAll {
-			operation = fmt.Sprintf("delete snapshot '%s'", snapshotName)
-		}
-		printDryRunSummary(operation, len(vms))
+		printDryRunSummary(fmt.Sprintf("delete %s", snapshotDesc), len(vms))
 		return nil
 	}
 
-	var confirmMsg string
+	// Confirmation
 	if deleteAll {
-		confirmMsg = fmt.Sprintf("Delete ALL snapshots from %d VM(s)? This cannot be undone.", len(vms))
+		fmt.Printf("Delete ALL snapshots from %d VM(s)? This cannot be undone.\n", len(vms))
 		if !confirmExactText("Type 'DELETE ALL' to confirm: ", "DELETE ALL") {
 			fmt.Println("Operation cancelled")
 			return nil
 		}
 	} else {
-		confirmMsg = fmt.Sprintf("Delete snapshot '%s' from %d VM(s)?", snapshotName, len(vms))
+		confirmMsg := fmt.Sprintf("Delete %s from %d VM(s)?", snapshotDesc, len(vms))
 		if !confirmOperation(confirmMsg) {
 			fmt.Println("Operation cancelled")
 			return nil
@@ -923,9 +917,13 @@ func runDeleteCommand(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		// Delete specific snapshot
-		if err := bulkMgr.DeleteSnapshots(ctx, vms, snapshotName); err != nil {
-			return fmt.Errorf("bulk snapshot deletion failed: %w", err)
+		// Delete specific snapshot(s)
+		// For multiple snapshots, delete each one
+		for _, snapshotName := range snapshotNames {
+			fmt.Printf("\n🗑️  Deleting snapshot '%s' from %d VM(s)...\n", snapshotName, len(vms))
+			if err := bulkMgr.DeleteSnapshots(ctx, vms, snapshotName); err != nil {
+				logger.Errorf("Failed to delete snapshot '%s': %v", snapshotName, err)
+			}
 		}
 		bulkMgr.PrintSummary()
 	}
@@ -1099,16 +1097,24 @@ func runListBackupsCommand(cmd *cobra.Command, args []string) error {
 	vmids, _ := cmd.Flags().GetStringSlice("vmid")
 	vmnames, _ := cmd.Flags().GetStringSlice("vmname")
 
+	backupOps := backup.NewOperations(client, vmOps, logger)
+
+	// Handle --all flag for storage-wide backup listing
+	if listAllFlag {
+		if storageFlag == "" {
+			return fmt.Errorf("--storage is required when using --all")
+		}
+		return backupOps.DisplayAllBackupsInStorage(storageFlag)
+	}
+
 	if len(vmids) == 0 && len(vmnames) == 0 {
-		return fmt.Errorf("either --vmid or --vmname must be specified")
+		return fmt.Errorf("either --vmid, --vmname, or --all with --storage must be specified")
 	}
 
 	vms, err := resolveVMs(vmids, vmnames)
 	if err != nil {
 		return err
 	}
-
-	backupOps := backup.NewOperations(client, vmOps, logger)
 
 	for _, vmInstance := range vms {
 		if err := backupOps.DisplayBackups(vmInstance.VMID, storageFlag); err != nil {
@@ -1128,9 +1134,15 @@ func runRestoreCommand(cmd *cobra.Command, args []string) error {
 	// For restore, we typically work with a single VM
 	vmid := vmids[0]
 
-	// Protection check
+	// Protection check with option to disable
 	protectionOps := protection.NewOperations(client, vmOps, logger)
-	protectionOps.CheckAndWarn(vmid, "restore")
+	_, shouldProceed, err := protectionOps.CheckAndOfferDisable(vmid, "restore")
+	if err != nil {
+		return fmt.Errorf("protection check failed: %w", err)
+	}
+	if !shouldProceed {
+		return nil // User cancelled
+	}
 
 	// Confirm if not auto-confirm
 	if !confirmOperation(fmt.Sprintf("Restore VM %s from %s? This will OVERWRITE the existing VM!", vmid, backupFileFlag)) {
@@ -1157,7 +1169,7 @@ func runDeleteBackupsCommand(cmd *cobra.Command, args []string) error {
 	// Dry-run mode - just show what would happen
 	if dryRun {
 		printDryRunHeader()
-		
+
 		// Specific backup deletion
 		if backupFileFlag != "" {
 			printDryRunAction("delete backup", vmid, "", fmt.Sprintf("backup='%s'", backupFileFlag))
@@ -1174,7 +1186,7 @@ func runDeleteBackupsCommand(cmd *cobra.Command, args []string) error {
 
 		// Retention-based cleanup
 		if keepCountFlag > 0 || maxAgeDaysFlag > 0 {
-			printDryRunAction("cleanup backups", vmid, "", 
+			printDryRunAction("cleanup backups", vmid, "",
 				fmt.Sprintf("keep=%d, max-age=%d days", keepCountFlag, maxAgeDaysFlag))
 			printDryRunSummary(fmt.Sprintf("cleanup backups (keep=%d, max-age=%d days)", keepCountFlag, maxAgeDaysFlag), 1)
 			return nil
@@ -2076,9 +2088,16 @@ func runInteractiveRestore() {
 	}
 	targetStorage := strings.TrimSpace(targetStorageInput)
 
-	// Protection check
+	// Protection check with option to disable
 	protectionOps := protection.NewOperations(client, vmOps, logger)
-	protectionOps.CheckAndWarn(vmInstance.VMID, "restore")
+	_, shouldProceed, err := protectionOps.CheckAndOfferDisable(vmInstance.VMID, "restore")
+	if err != nil {
+		logger.Errorf("Protection check failed: %v", err)
+		return
+	}
+	if !shouldProceed {
+		return // User cancelled
+	}
 
 	// Confirm operation
 	fmt.Printf("\n⚠️  WARNING: This will OVERWRITE VM %s (%s) with backup %s\n",

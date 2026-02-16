@@ -146,7 +146,7 @@ func (ops *Operations) ListBackupsForVM(vmid, storage string) ([]*Backup, error)
 			}
 
 			// API client wraps array responses in "items" key
-		nodeStorages, ok := storagesResp["items"].([]interface{})
+			nodeStorages, ok := storagesResp["items"].([]interface{})
 			if !ok {
 				continue
 			}
@@ -207,7 +207,7 @@ func (ops *Operations) ListBackupsForVM(vmid, storage string) ([]*Backup, error)
 			}
 
 			// API client wraps array responses in "items" key
-		contents, ok := contentsResp["items"].([]interface{})
+			contents, ok := contentsResp["items"].([]interface{})
 			if !ok {
 				continue
 			}
@@ -481,4 +481,192 @@ func (ops *Operations) DeleteOldBackups(vmid, storage string, keepCount int, max
 	}
 
 	return deleted, nil
+}
+
+// ListAllBackupsInStorage lists ALL backups in a storage, not filtered by VM
+// This provides a storage-wide backup overview
+func (ops *Operations) ListAllBackupsInStorage(storage string) ([]*Backup, error) {
+	ops.logger.Debugf("Listing all backups in storage %s", storage)
+
+	// Get all nodes
+	nodesResp, err := ops.client.Get("/nodes", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get nodes: %w", err)
+	}
+
+	// API client wraps array responses in "items" key
+	nodes, ok := nodesResp["items"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid nodes response")
+	}
+
+	var allBackups []*Backup
+	seen := make(map[string]bool)
+
+	for _, nodeData := range nodes {
+		node, ok := nodeData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		nodeName := node["node"].(string)
+
+		// Try with backup content filter first
+		params := map[string]string{"content": "backup"}
+		contentsResp, err := ops.client.Get(
+			fmt.Sprintf("/nodes/%s/storage/%s/content", nodeName, storage),
+			params,
+		)
+		if err != nil {
+			// Try without filter
+			contentsResp, err = ops.client.Get(
+				fmt.Sprintf("/nodes/%s/storage/%s/content", nodeName, storage),
+				nil,
+			)
+			if err != nil {
+				continue
+			}
+		}
+
+		// API client wraps array responses in "items" key
+		contents, ok := contentsResp["items"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, itemData := range contents {
+			item, ok := itemData.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			volid, ok := item["volid"].(string)
+			if !ok {
+				continue
+			}
+
+			// Skip if already seen
+			if seen[volid] {
+				continue
+			}
+
+			// Check if this is a backup
+			content := ""
+			if c, ok := item["content"].(string); ok {
+				content = c
+			}
+
+			// Accept if content is backup or if volid contains vzdump
+			isBackup := content == "backup" || strings.Contains(volid, "vzdump")
+			if !isBackup {
+				continue
+			}
+
+			backup := &Backup{
+				VolID:   volid,
+				Storage: storage,
+				Node:    nodeName,
+				Content: content,
+			}
+
+			// Extract VMID from item or volid
+			if v, ok := item["vmid"]; ok {
+				backup.VMID = fmt.Sprintf("%v", v)
+			} else {
+				// Try to extract VMID from volid
+				backup.VMID = extractVMIDFromVolid(volid)
+			}
+
+			// Extract size
+			if size, ok := item["size"].(float64); ok {
+				backup.Size = size / (1024 * 1024 * 1024) // Convert to GB
+			}
+
+			// Extract creation time
+			if ctime, ok := item["ctime"].(float64); ok {
+				backup.CreatedTime = int64(ctime)
+			}
+
+			// Extract format
+			if format, ok := item["format"].(string); ok {
+				backup.Format = format
+			}
+
+			seen[volid] = true
+			allBackups = append(allBackups, backup)
+		}
+	}
+
+	return allBackups, nil
+}
+
+// extractVMIDFromVolid extracts VMID from backup volid patterns
+func extractVMIDFromVolid(volid string) string {
+	// Patterns: vzdump-qemu-123-2024_01_01.vma.zst, vzdump-lxc-123-...
+	if strings.Contains(volid, "vzdump") {
+		parts := strings.Split(volid, "-")
+		if len(parts) >= 3 {
+			return parts[2]
+		}
+	}
+	// Pattern: backup-123-..., vm-123-...
+	for _, prefix := range []string{"backup-", "vm-"} {
+		if strings.Contains(volid, prefix) {
+			parts := strings.Split(volid, prefix)
+			if len(parts) >= 2 {
+				// Get the VMID part (before next dash or end)
+				vmidPart := strings.Split(parts[1], "-")[0]
+				if vmidPart != "" {
+					return vmidPart
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// DisplayAllBackupsInStorage displays all backups in a storage
+func (ops *Operations) DisplayAllBackupsInStorage(storage string) error {
+	backups, err := ops.ListAllBackupsInStorage(storage)
+	if err != nil {
+		return err
+	}
+
+	if len(backups) == 0 {
+		fmt.Printf("No backups found in storage %s\n", storage)
+		return nil
+	}
+
+	// Sort by creation time (newest first)
+	for i := 0; i < len(backups)-1; i++ {
+		for j := i + 1; j < len(backups); j++ {
+			if backups[i].CreatedTime < backups[j].CreatedTime {
+				backups[i], backups[j] = backups[j], backups[i]
+			}
+		}
+	}
+
+	fmt.Printf("\nAll backups in storage '%s':\n", storage)
+	fmt.Println(strings.Repeat("=", 120))
+	fmt.Printf("%-3s %-10s %-55s %-12s %-15s %-15s\n",
+		"#", "VM ID", "Volume ID", "Size", "Created", "Node")
+	fmt.Println(strings.Repeat("-", 120))
+
+	for i, backup := range backups {
+		created := time.Unix(backup.CreatedTime, 0).Format("2006-01-02 15:04")
+		size := fmt.Sprintf("%.2f GB", backup.Size)
+
+		// Truncate volid if too long
+		volid := backup.VolID
+		if len(volid) > 54 {
+			volid = volid[:51] + "..."
+		}
+
+		fmt.Printf("%-3d %-10s %-55s %-12s %-15s %-15s\n",
+			i+1, backup.VMID, volid, size, created, backup.Node)
+	}
+
+	fmt.Println(strings.Repeat("-", 120))
+	fmt.Printf("Total backups: %d\n", len(backups))
+
+	return nil
 }

@@ -61,8 +61,8 @@ type ContainerConfig struct {
 	Storage string
 
 	// Startup
-	Startup   string
-	OnBoot    bool
+	Startup     string
+	OnBoot      bool
 	StartOnBoot bool
 
 	// Features
@@ -82,15 +82,15 @@ type ContainerConfig struct {
 
 // NetworkConfig represents container network configuration
 type NetworkConfig struct {
-	Name    string
-	Bridge  string
-	IP      string
-	IP6     string
-	Gateway string
+	Name     string
+	Bridge   string
+	IP       string
+	IP6      string
+	Gateway  string
 	Gateway6 string
-	VLAN    int
+	VLAN     int
 	Firewall bool
-	Rate    float64 // MB/s
+	Rate     float64 // MB/s
 }
 
 // ContainerSnapshot represents a container snapshot
@@ -112,16 +112,16 @@ type ContainerStatus struct {
 	PID    int
 
 	// Resource usage
-	CPU       float64
+	CPU        float64
 	CPUPercent float64
-	MaxCPU    int
-	Memory    int64
-	MaxMemory int64
+	MaxCPU     int
+	Memory     int64
+	MaxMemory  int64
 	MemPercent float64
-	Swap      int64
-	MaxSwap   int64
-	Disk      int64
-	MaxDisk   int64
+	Swap       int64
+	MaxSwap    int64
+	Disk       int64
+	MaxDisk    int64
 
 	// Network
 	NetIn  int64
@@ -133,27 +133,27 @@ type ContainerStatus struct {
 
 // ContainerBackup represents a container backup
 type ContainerBackup struct {
-	VolID       string
-	Format      string
-	Size        int64
-	CreatedTime time.Time
-	VMID        int
-	Note        string
-	Protected   bool
+	VolID        string
+	Format       string
+	Size         int64
+	CreatedTime  time.Time
+	VMID         int
+	Note         string
+	Protected    bool
 	Verification string
 }
 
 // MountPoint represents a container mount point
 type MountPoint struct {
-	ID      string
-	Volume  string
-	Size    string
-	MP      string
-	ACL     bool
-	Backup  bool
-	Quota   bool
-	RO      bool
-	Shared  bool
+	ID     string
+	Volume string
+	Size   string
+	MP     string
+	ACL    bool
+	Backup bool
+	Quota  bool
+	RO     bool
+	Shared bool
 }
 
 // ContainerFeatures represents enabled container features
@@ -195,11 +195,11 @@ type ContainerCloneOptions struct {
 
 // ContainerRestoreOptions for restoring containers
 type ContainerRestoreOptions struct {
-	VMID        int
-	Node        string
-	BackupFile  string
-	Storage     string
-	Pool        string
-	Force       bool
+	VMID         int
+	Node         string
+	BackupFile   string
+	Storage      string
+	Pool         string
+	Force        bool
 	Unprivileged bool
 }

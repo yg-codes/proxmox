@@ -2,13 +2,13 @@ package network
 
 // NetworkInterface represents a network interface
 type NetworkInterface struct {
-	Node    string
-	Iface   string
-	Type    string // bridge, bond, eth, vlan, etc.
-	Active  bool
+	Node      string
+	Iface     string
+	Type      string // bridge, bond, eth, vlan, etc.
+	Active    bool
 	Autostart bool
-	Method  string // static, manual, dhcp
-	Method6 string // static, manual, dhcp
+	Method    string // static, manual, dhcp
+	Method6   string // static, manual, dhcp
 
 	// IP configuration
 	Address  string
@@ -23,15 +23,15 @@ type NetworkInterface struct {
 	VLANID        int
 
 	// Bridge configuration
-	BridgePorts  string
-	BridgeSTP    string
-	BridgeFD     string
+	BridgePorts     string
+	BridgeSTP       string
+	BridgeFD        string
 	BridgeVLANAware bool
 
 	// Bond configuration
-	BondMode      string
-	BondPrimary   string
-	Slaves        string
+	BondMode           string
+	BondPrimary        string
+	Slaves             string
 	BondXmitHashPolicy string
 
 	// Additional info
@@ -59,33 +59,33 @@ type DNSConfig struct {
 
 // SDNZone represents a Software Defined Network zone
 type SDNZone struct {
-	Zone        string
-	Type        string // vlan, vxlan, qinq, simple
-	Nodes       string
-	Pending     bool
-	State       string
+	Zone    string
+	Type    string // vlan, vxlan, qinq, simple
+	Nodes   string
+	Pending bool
+	State   string
 
 	// VLAN zone fields
 	Bridge string
 	Tag    int
 
 	// VXLAN zone fields
-	Peers       string
-	MTU         int
+	Peers string
+	MTU   int
 
 	// Common fields
-	IPAM        string
-	DNS         string
-	ReverseDNS  string
-	DNSZone     string
+	IPAM       string
+	DNS        string
+	ReverseDNS string
+	DNSZone    string
 }
 
 // SDNVNet represents a virtual network in an SDN zone
 type SDNVNet struct {
-	VNet   string
-	Zone   string
-	Alias  string
-	Tag    int
+	VNet      string
+	Zone      string
+	Alias     string
+	Tag       int
 	VLANAware bool
 
 	// State
@@ -105,12 +105,12 @@ type SDNSubnet struct {
 
 // Firewall represents node or cluster firewall configuration
 type Firewall struct {
-	Enable      bool
-	LogLevelIn  string
-	LogLevelOut string
-	Nf_conntrack_max int
+	Enable                               bool
+	LogLevelIn                           string
+	LogLevelOut                          string
+	Nf_conntrack_max                     int
 	Nf_conntrack_tcp_timeout_established int
-	Nf_conntrack_tcp_timeout_syn_recv int
+	Nf_conntrack_tcp_timeout_syn_recv    int
 }
 
 // FirewallRule represents a firewall rule

@@ -17,8 +17,8 @@ type NodeResource struct {
 	Online bool
 
 	// CPU metrics
-	CPU       float64 // Current CPU usage (0-1)
-	MaxCPU    int     // Number of CPU cores
+	CPU        float64 // Current CPU usage (0-1)
+	MaxCPU     int     // Number of CPU cores
 	CPUPercent float64 // CPU usage percentage
 
 	// Memory metrics
@@ -27,8 +27,8 @@ type NodeResource struct {
 	MemPercent float64 // Memory usage percentage
 
 	// Disk metrics
-	Disk       int64   // Used disk in bytes
-	MaxDisk    int64   // Total disk in bytes
+	Disk        int64   // Used disk in bytes
+	MaxDisk     int64   // Total disk in bytes
 	DiskPercent float64 // Disk usage percentage
 
 	// Network metrics
@@ -51,18 +51,18 @@ type VMResource struct {
 	Status string
 
 	// CPU metrics
-	CPU       float64 // Current CPU usage (0-1)
-	MaxCPU    int     // Number of vCPUs
+	CPU        float64 // Current CPU usage (0-1)
+	MaxCPU     int     // Number of vCPUs
 	CPUPercent float64
 
 	// Memory metrics
-	Memory     int64   // Used memory in bytes
-	MaxMemory  int64   // Allocated memory in bytes
+	Memory     int64 // Used memory in bytes
+	MaxMemory  int64 // Allocated memory in bytes
 	MemPercent float64
 
 	// Disk metrics
-	Disk       int64   // Used disk in bytes
-	MaxDisk    int64   // Allocated disk in bytes
+	Disk        int64 // Used disk in bytes
+	MaxDisk     int64 // Allocated disk in bytes
 	DiskPercent float64
 
 	// Network metrics
@@ -92,37 +92,37 @@ type StorageResource struct {
 
 // ResourceHistory represents historical resource data
 type ResourceHistory struct {
-	Time      time.Time
-	CPU       float64
-	Memory    float64
-	Disk      float64
-	NetIn     float64
-	NetOut    float64
-	IODelay   float64
-	LoadAvg   float64
+	Time    time.Time
+	CPU     float64
+	Memory  float64
+	Disk    float64
+	NetIn   float64
+	NetOut  float64
+	IODelay float64
+	LoadAvg float64
 }
 
 // ResourceStats represents aggregated statistics
 type ResourceStats struct {
 	// Cluster totals
-	TotalNodes   int
-	OnlineNodes  int
-	TotalVMs     int
-	RunningVMs   int
-	StoppedVMs   int
+	TotalNodes  int
+	OnlineNodes int
+	TotalVMs    int
+	RunningVMs  int
+	StoppedVMs  int
 
 	// Cluster resources
-	TotalCPU    int
-	UsedCPU     float64
-	CPUPercent  float64
+	TotalCPU   int
+	UsedCPU    float64
+	CPUPercent float64
 
 	TotalMemory   int64
 	UsedMemory    int64
 	MemoryPercent float64
 
-	TotalDisk    int64
-	UsedDisk     int64
-	DiskPercent  float64
+	TotalDisk   int64
+	UsedDisk    int64
+	DiskPercent float64
 
 	// Storage stats
 	TotalStorage     int
@@ -134,7 +134,7 @@ type ResourceStats struct {
 
 // RRDData represents RRD (Round Robin Database) data for graphs
 type RRDData struct {
-	TimeFrame string           // hour, day, week, month, year
+	TimeFrame  string // hour, day, week, month, year
 	DataPoints []*ResourceHistory
 }
 

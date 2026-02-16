@@ -7,12 +7,27 @@ on:
 
 env:
   GO_VERSION: '1.22'
+  # Keep only the latest N releases to control storage costs
+  RETENTION_COUNT: 1
 
 permissions:
   contents: write
 
 jobs:
+  # Clean up old releases before creating new one
+  cleanup-old-releases:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old releases
+        uses: dev-drprasad/delete-older-releases@v0.3.2
+        with:
+          keep_latest: ${{ env.RETENTION_COUNT }}
+          delete_tag_pattern: v
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-pve:
+    needs: cleanup-old-releases
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

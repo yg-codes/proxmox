@@ -108,7 +108,7 @@ func (ops *Operations) GetContainerConfig(node string, vmid int) (map[string]int
 	path := fmt.Sprintf("/nodes/%s/lxc/%d/config", node, vmid)
 	resp, err := ops.client.Get(path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get container config: %w", vmid, err)
+		return nil, fmt.Errorf("failed to get container config for %d: %w", vmid, err)
 	}
 
 	return resp, nil
@@ -120,10 +120,10 @@ func (ops *Operations) CreateContainer(config *ContainerConfig) (string, error) 
 	ops.logger.Infof("Creating container %d on node %s", config.VMID, config.Node)
 
 	data := map[string]string{
-		"vmid":     strconv.Itoa(config.VMID),
+		"vmid":       strconv.Itoa(config.VMID),
 		"ostemplate": config.OSTemplate,
-		"hostname": config.Hostname,
-		"storage":  config.Storage,
+		"hostname":   config.Hostname,
+		"storage":    config.Storage,
 	}
 
 	// Optional fields

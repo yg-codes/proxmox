@@ -232,4 +232,3 @@ func (c *Config) GetMaxConcurrentOperations(operationType string) int {
 		return c.Operations.MaxConcurrentSnapshots
 	}
 }
-
