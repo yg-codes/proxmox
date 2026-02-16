@@ -1,5 +1,12 @@
 # Implementation Summary - Backup Operations for Go
 
+> ⚠️ **DEPRECATED** - This document is archived and no longer maintained.
+>
+> The Go implementation has achieved 100% feature parity with Python as of v1.2.0.
+> The Python CLI has been deprecated.
+>
+> **Current Documentation**: See [FUNCTIONAL_SPECIFICATION.md](FUNCTIONAL_SPECIFICATION.md) for the single source of truth.
+
 **Date**: 2025-10-09
 **Status**: ✅ FULLY COMPLETE - All features implemented including dry-run safety
 

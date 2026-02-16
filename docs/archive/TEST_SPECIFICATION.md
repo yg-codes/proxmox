@@ -1,5 +1,12 @@
 # Proxmox Snapshot Manager - Test Specification
 
+> ⚠️ **DEPRECATED** - This document is archived and no longer maintained.
+>
+> The Go implementation has achieved 100% feature parity with Python as of v1.2.0.
+> The Python CLI has been deprecated - no longer need Python vs Go parity testing.
+>
+> **Current Documentation**: See [FUNCTIONAL_SPECIFICATION.md](FUNCTIONAL_SPECIFICATION.md) for the single source of truth.
+
 **Version:** 1.0
 **Date:** 2025-10-09
 **Purpose:** Comprehensive test specification for validating feature parity between Python and Go implementations
