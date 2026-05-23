@@ -266,21 +266,21 @@ make release        # Creates tar.gz/zip archives in build/release/
 ### Cross-compilation Targets
 - Linux: amd64 (primary), arm64
 - macOS: amd64 (Intel), arm64 (Apple Silicon)
-- Windows: amd64
+- Windows: amd64, arm64
 
-**Build Priority**: Per user preferences, only **Linux (amd64)** and **Windows (amd64)** builds are needed for releases to save storage. The CI/CD pipeline builds only these two platforms.
+All 6 platforms (linux/darwin/windows × amd64/arm64) are built by the GoReleaser CI/CD pipeline on tag push.
 
 ### CI/CD with GitHub Actions
 
 **Automated Release Process**:
 1. Push a tag matching `v*` pattern:
    ```bash
-   git tag -a v1.2.0 -m "Release v1.2.0"
-   git push origin v1.2.0
+   git tag -a v1.3.0 -m "Release v1.3.0"
+   git push origin v1.3.0
    ```
 
 2. GitHub Actions automatically:
-   - Builds Linux (amd64) and Windows (amd64) binaries
+   - Builds all 6 platform binaries via GoReleaser
    - Generates SHA256 checksums
    - Creates GitHub release with binaries and documentation
 

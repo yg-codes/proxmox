@@ -49,7 +49,7 @@ To create an API token on a Proxmox node:
 
 ```bash
 pve --version
-# pve v1.2.0 (commit: 4d763aa, built: 2026-05-23)
+# pve v1.3.0 (commit: d5eef68, built: 2026-05-23)
 
 pve node list
 # NAME    STATUS   CPU   MEM       UPTIME
@@ -61,7 +61,7 @@ pve node list
 ```bash
 git tag -a v1.3.0 -m "Release v1.3.0"
 git push origin v1.3.0
-# GitHub Actions builds Linux amd64 + Windows amd64 binaries automatically
+# GitHub Actions builds 6-platform binaries automatically (linux/darwin/windows × amd64/arm64)
 ```
 
 ## Reference
@@ -91,7 +91,8 @@ git push origin v1.3.0
 | `pve vm backup list --all --storage local` | List all backups on storage |
 | `pve vm backup restore --vmid 100 --backup-file "..." --node pve1` | Restore backup |
 | `pve vm bulk start` | Start all stopped VMs |
-| `pve vm bulk stop` | Stop all running VMs |
+| `pve vm bulk stop` | Force-stop all running VMs |
+| `pve vm bulk shutdown` | Gracefully shut down all running VMs |
 | `pve vm bulk backup --storage local` | Backup all VMs |
 | `pve container list` | List containers |
 | `pve container start --node pve1 --vmid 200` | Start container |
