@@ -269,7 +269,8 @@ func parseNodeBasic(nodeMap map[string]interface{}) *Node {
 
 func parseNodeDetailed(nodeName string, resp map[string]interface{}) *Node {
 	node := &Node{
-		Name: nodeName,
+		Name:   nodeName,
+		Online: true,
 	}
 
 	if cpu, ok := resp["cpu"].(float64); ok {
