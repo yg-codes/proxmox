@@ -4,7 +4,7 @@ Single-binary Proxmox VE management CLI with AWS-style command interface.
 
 [![Release](https://img.shields.io/github/v/release/yg-codes/proxmox)](https://github.com/yg-codes/proxmox/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/yg-codes/proxmox/release.yml)](https://github.com/yg-codes/proxmox/actions)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/yg-codes/proxmox?filename=proxmox-admin-cli%2Fgo.mod)](https://github.com/yg-codes/proxmox)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/yg-codes/proxmox)](https://github.com/yg-codes/proxmox)
 
 ## How-to
 
@@ -24,7 +24,7 @@ mise run install    # builds + installs pve to $GOPATH/bin
 
 **From source with make:**
 ```bash
-cd proxmox-admin-cli && make install
+make install
 ```
 
 ### Configure
@@ -122,8 +122,8 @@ git push origin v1.3.0
 | `mise run build` | Build `pve` binary (uses Go from mise) |
 | `mise run install` | Build + install to `$GOPATH/bin` |
 | `mise run clean` | Remove build artifacts |
-| `cd proxmox-admin-cli && make build-all` | Cross-compile all platforms |
-| `cd proxmox-admin-cli && make release` | Create release archives |
+| `make build-all` | Cross-compile all platforms |
+| `make release` | Create release archives |
 
 ### Configuration
 
@@ -139,7 +139,8 @@ git push origin v1.3.0
 
 ```
 proxmox/
-├── proxmox-admin-cli/        # Go source (cmd/, pkg/, Makefile)
+├── cmd/                      # Cobra commands
+├── pkg/                      # Core packages
 ├── scripts/                  # API token setup, SSH runner
 ├── .github/workflows/        # CI/CD release pipeline
 ├── .mise.toml                # mise build tasks

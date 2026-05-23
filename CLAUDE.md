@@ -15,40 +15,27 @@ This repository provides a comprehensive Proxmox VE management CLI written in Go
 
 ```
 proxmox/
-├── proxmox-admin-cli/              # Go CLI implementation
-│   ├── cmd/                        # CLI entry point and commands
-│   ├── pkg/                        # Core packages
-│   └── Makefile                    # Build automation
-├── scripts/                        # Setup and utility scripts
-│   ├── create-api-token.sh         # Fast API token provisioning
-│   ├── setup-pve-cli-user.sh       # Full user + token setup
-│   └── pve-ssh-exec.sh             # Multi-node SSH command runner
-└── FUNCTIONAL_SPECIFICATION.md     # Complete feature reference
+├── cmd/                        # CLI entry point and commands
+├── pkg/                        # Core packages
+├── scripts/                    # Setup and utility scripts
+│   ├── create-api-token.sh     # Fast API token provisioning
+│   ├── setup-pve-cli-user.sh   # Full user + token setup
+│   └── pve-ssh-exec.sh         # Multi-node SSH command runner
+├── Makefile                    # Build automation
+├── go.mod / go.sum             # Go module
+├── .mise.toml                  # mise build tasks
+└── FUNCTIONAL_SPECIFICATION.md # Complete feature reference
 ```
 
 ## Quick Reference
 
-### One-Liner Quality Check
-
 ```bash
-cd proxmox-admin-cli/ && make fmt && make vet && make test && make build
+make fmt && make vet && make test && make build
 ```
 
-### Common Tasks
-```bash
-# Build Go binary
-cd proxmox-admin-cli/ && make build
-
-# Test Go CLI
-./build/pve vm list
-
-# Create new release
-git tag -a v1.2.0 -m "Release v1.2.0" && git push origin v1.2.0
-```
+Complete command and parameter documentation: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
 
 ## Development Commands
-
-### Go Implementation (proxmox-admin-cli/)
 
 ```bash
 # Setup and build
@@ -76,35 +63,14 @@ make clean          # Remove build artifacts
 make docker-build
 make docker-run ARGS='--help'
 
-# Direct usage (after build) - AWS-STYLE COMMAND STRUCTURE
+# Direct usage (after build)
 ./build/pve --help
 
-# Cluster commands (task, storage, network)
-pve cluster task list
-pve cluster storage list-backup
-pve cluster network list --node pve1
-
-# Node commands (resource monitoring, services, power)
-pve node list
-pve node status --node pve1
-pve node resource stats --node pve1
-
-# VM commands (snapshot, backup, lifecycle)
-pve vm list
-pve vm snapshot create --vmid 7303 --prefix backup
-pve vm snapshot list --vmid 7303
-pve vm backup create --vmid 7303 --storage local
-pve vm start --vmid 7303
-
-# VM bulk operations (all VMs at once)
-pve vm bulk start              # Start all stopped VMs
-pve vm bulk stop               # Stop all running VMs
-pve vm bulk backup --storage local  # Backup all VMs
-
-# Container commands (top-level)
-pve container list
-pve container create --name test-ct
+# Build + install for testing
+make build && make install
 ```
+
+Usage examples: [README.md](README.md) | Command reference: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
 
 ## Configuration
 
@@ -137,24 +103,22 @@ pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
 
 ### Module Structure
 ```
-proxmox-admin-cli/
-├── cmd/              # CLI entry point
-├── pkg/
-│   ├── api/         # HTTP client and authentication
-│   ├── vm/          # VM operations and selection
-│   ├── snapshot/    # Snapshot lifecycle management
-│   ├── backup/      # Backup operations
-│   ├── storage/     # Storage management
-│   ├── bulk/        # Concurrent bulk operations
-│   ├── protection/  # VM protection handling
-│   ├── node/        # Node management
-│   ├── task/        # Task monitoring
-│   ├── resource/    # Resource statistics
-│   ├── container/   # LXC container operations
-│   ├── network/     # Network configuration
-│   └── config/      # Configuration management
-├── Makefile         # Build automation
-└── go.mod           # Go module definition
+cmd/              # CLI entry point
+pkg/
+├── api/         # HTTP client and authentication
+├── vm/          # VM operations and selection
+├── snapshot/    # Snapshot lifecycle management
+├── backup/      # Backup operations
+├── storage/     # Storage management
+├── bulk/        # Concurrent bulk operations
+├── protection/  # VM protection handling
+├── node/        # Node management
+├── task/        # Task monitoring
+├── resource/    # Resource statistics
+├── container/   # LXC container operations
+└── network/     # Network configuration
+Makefile         # Build automation
+go.mod           # Go module definition
 ```
 
 **Key Technologies:**
@@ -322,8 +286,7 @@ make release        # Creates tar.gz/zip archives in build/release/
 
 **Manual Emergency Release** (if GitHub Actions unavailable):
 ```bash
-cd proxmox-admin-cli/
 make build-all
 make release
-# Upload manually via GitHub web UI or glab
+# Upload manually via GitHub web UI
 ```
