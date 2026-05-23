@@ -4,42 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This repository provides comprehensive Proxmox VE management tools in two implementations:
-
-1. **Go Implementation** (Recommended for production): High-performance, single-binary admin CLI
-2. **Python Modular** (Stable): Clean architecture with VM and snapshot management
+This repository provides a comprehensive Proxmox VE management CLI written in Go. It offers a high-performance, single-binary admin tool with an AWS-style command hierarchy.
 
 ### Requirements
 
-- **Go**: Version 1.21 or higher (for Go implementation)
-- **Python**: Version 3.8 or higher (for Python implementation)
-- **Package Managers**: `uv` (Python), `pipx` (Python CLI tools)
+- **Go**: Version 1.21 or higher
 - **OS**: Linux, macOS, or Windows (WSL supported)
 
 ## Directory Structure
 
 ```
 proxmox/
-├── proxmox-admin-cli/              # Go implementation (5-10x faster)
-└── python/                         # Python implementations
-    └── modular/                    # Modular implementations
-        ├── snapshot-manager/       # Modular snapshot management
-        ├── vm-manager/             # Modular VM & backup management
-        └── pve-snapshots-cli.py    # CLI wrapper
+├── proxmox-admin-cli/              # Go CLI implementation
+│   ├── cmd/                        # CLI entry point and commands
+│   ├── pkg/                        # Core packages
+│   └── Makefile                    # Build automation
+├── scripts/                        # Setup and utility scripts
+│   ├── create-api-token.sh         # Fast API token provisioning
+│   ├── setup-pve-cli-user.sh       # Full user + token setup
+│   └── pve-ssh-exec.sh             # Multi-node SSH command runner
+└── FUNCTIONAL_SPECIFICATION.md     # Complete feature reference
 ```
 
 ## Quick Reference
 
-### One-Liner Quality Checks
+### One-Liner Quality Check
 
-**Go (Complete Check)**:
 ```bash
 cd proxmox-admin-cli/ && make fmt && make vet && make test && make build
-```
-
-**Python (Complete Check)**:
-```bash
-black . && flake8 . && mypy .
 ```
 
 ### Common Tasks
@@ -50,11 +42,8 @@ cd proxmox-admin-cli/ && make build
 # Test Go CLI
 ./build/pve vm list
 
-# Run Python tool (development)
-cd python/modular/snapshot-manager/ && uv run python main.py --help
-
 # Create new release
-git tag -a v1.0.1 -m "Release v1.0.1" && git push origin v1.0.1
+git tag -a v1.2.0 -m "Release v1.2.0" && git push origin v1.2.0
 ```
 
 ## Development Commands
@@ -117,36 +106,11 @@ pve container list
 pve container create --name test-ct
 ```
 
-### Python Modular Implementation
-
-```bash
-# Installation (choose one approach)
-
-# Option 1: Global installation with pipx (recommended)
-cd python/modular/
-pipx install ./snapshot-manager/
-pipx install ./vm-manager/
-pve-snapshot-manager --help
-pve-vm-manager-modular --help
-
-# Option 2: Project development with uv
-cd python/modular/snapshot-manager/
-uv run python main.py --help
-cd ../vm-manager/
-uv run python main.py --help
-
-# Code quality (in project root)
-black .             # Format code
-flake8 .            # Lint code
-mypy .              # Type checking
-pytest              # Run tests (if present)
-```
-
 ## Configuration
 
-### Authentication (Required for all implementations)
+### Authentication (Required)
 
-Both Python and Go implementations use the **same authentication approach** - environment variables only, no config files needed.
+Environment variables only, no config files needed.
 
 ```bash
 # Set environment variables (required)
@@ -164,21 +128,14 @@ export PVE_PASSWORD=your-password
 ```bash
 # Create token in Proxmox Web UI first, then run:
 pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
+
+# Or use the setup script:
+./scripts/create-api-token.sh pve1
 ```
 
 ## Architecture
 
-### Go Implementation (Recommended for Production)
-
-**Benefits:**
-- **5-10x faster** than Python with goroutine-based concurrency
-- **Single binary** with no runtime dependencies
-- **Memory efficient**: ~10-20MB vs ~50-100MB (Python)
-- **Type safety**: Compile-time error detection
-- **Cross-platform**: Native builds for Linux, macOS, Windows
-- **Startup time**: ~0.1s vs ~2-3s (Python)
-
-**Module Structure:**
+### Module Structure
 ```
 proxmox-admin-cli/
 ├── cmd/              # CLI entry point
@@ -189,6 +146,12 @@ proxmox-admin-cli/
 │   ├── backup/      # Backup operations
 │   ├── storage/     # Storage management
 │   ├── bulk/        # Concurrent bulk operations
+│   ├── protection/  # VM protection handling
+│   ├── node/        # Node management
+│   ├── task/        # Task monitoring
+│   ├── resource/    # Resource statistics
+│   ├── container/   # LXC container operations
+│   ├── network/     # Network configuration
 │   └── config/      # Configuration management
 ├── Makefile         # Build automation
 └── go.mod           # Go module definition
@@ -198,39 +161,16 @@ proxmox-admin-cli/
 - **cobra**: CLI framework
 - **logrus**: Structured logging
 - **net/http**: HTTP client (stdlib)
-- **Environment variables**: Configuration (matching Python implementation)
-
-### Python Modular Architecture
-
-**Snapshot Manager** (`modular/snapshot-manager/`):
-- `main.py` - CLI entry point
-- `snapshot_manager.py` - Main orchestrator
-- `proxmox_api.py` - API communication
-- `vm_operations.py` - VM management
-- `vm_selector.py` - Flexible VM selection
-- `snapshot_operations.py` - Snapshot CRUD
-- `bulk_operations.py` - Concurrent operations
-
-**VM Manager** (`modular/vm-manager/`):
-- All snapshot-manager modules (reused)
-- `vm_manager.py` - Main orchestrator
-- `backup_operations.py` - Complete backup lifecycle (CRUD)
-- `storage_operations.py` - Storage discovery
-- `snapshot_integration.py` - Bridge to snapshot-manager
-
-**Shared Code Reuse:**
-- 60% code reuse through shared modules: `proxmox_api.py`, `vm_operations.py`, `vm_selector.py`, `bulk_operations.py`
-- Clean separation of concerns
-- Individual module testing capability
+- **Environment variables**: Configuration
 
 ## Key Features
 
-### VM Selection Patterns (All Implementations)
+### VM Selection Patterns
 - **Range**: `7201-7205` (all VMs in range)
 - **List**: `7201,7203,7205` (specific VMs)
 - **Wildcard**: `72*` (pattern matching)
 - **Keywords**: `running`, `stopped`, `all`
-- **Interactive**: Checkbox-style UI
+- **Interactive**: Checkbox-style UI (`--vmid i`)
 - **Names**: VM name resolution alongside IDs
 
 ### Snapshot Operations
@@ -238,26 +178,18 @@ proxmox-admin-cli/
 - Optional VM state (RAM) inclusion
 - List with configuration details
 - Rollback with safety checks
-- Bulk operations with concurrency limits
+- Delete single, multiple, or all snapshots
+- Bulk operations with concurrency
 
-### Backup Management (Python VM Manager only)
+### Backup Management
 - **Create**: Multiple modes (snapshot, suspend, stop)
-- **List**: Detailed backup information with volid format
+- **List**: Per-VM or storage-wide listing (`--all --storage`)
 - **Restore**: VM restoration with protection handling
-- **Delete**:
-  - Specific deletion using volid
-  - Pattern-based with wildcards (e.g., `*2024*`)
-  - Automated cleanup with retention policies
-  - Bulk concurrent operations
+- **Delete**: By volid, pattern, keep-count, or max-age-days
 
 **Important**: Backup volid format = `<STORAGE_ID>:<CONTENT_TYPE>/<PATH>`
 - File-based: `local:backup/vzdump-qemu-7303-2025_08_06.vma.zst`
 - PBS backup: `backup-pbs:backup/vm/7303/2025-08-05T12:16:44Z`
-
-### Concurrency Limits (Python)
-- `MAX_CONCURRENT_START_STOP=3` - VM state changes
-- `MAX_CONCURRENT_BACKUPS=2` - Backup operations
-- `MAX_CONCURRENT_SNAPSHOTS=2` - Snapshot operations
 
 ### Snapshot Naming Constraints
 - Maximum prefix length: 25 characters
@@ -277,16 +209,6 @@ proxmox-admin-cli/
 - 2-space indentation (standard Go formatting)
 - Descriptive variable names (no hardcoded values)
 
-### Python
-- Python 3.8+ with type hints (mandatory)
-- Black formatter (88-character line limit)
-- PEP 8 compliance (enforced via `flake8`)
-- Comprehensive docstrings for public methods
-- Custom `ProxmoxAPIError` exception
-- Explicit error handling patterns
-- 4-space indentation (Python standard)
-- Descriptive variable names (no hardcoded values)
-
 ### Git Conventions (GitHub Repository)
 
 **Commit Messages**:
@@ -295,7 +217,7 @@ proxmox-admin-cli/
 - **Do NOT include** Claude Code attribution:
   ```
   # NEVER INCLUDE:
-  🤖 Generated with [Claude Code](https://claude.ai/code)
+  Generated with [Claude Code](https://claude.ai/code)
   Co-Authored-By: Claude <noreply@anthropic.com>
   ```
 
@@ -308,15 +230,13 @@ proxmox-admin-cli/
 - Always ignore `claude` and `.trae` directories
 - Build artifacts (`build/`, `dist/`)
 - Environment files (`.env`)
-- Python artifacts (`__pycache__/`, `*.pyc`)
 - Go artifacts (`*.test`, `coverage.out`)
 
 ## Testing & Safety
 
 ### Testing Environment
-- **Go**: Use standard `go test`, coverage with `make test-coverage`
-- **Python**: Use pytest (if tests present)
-- Both require live Proxmox environment
+- Use standard `go test`, coverage with `make test-coverage`
+- Requires live Proxmox environment
 - Test API token permissions before bulk operations
 - Verify storage availability before backup operations
 
@@ -342,49 +262,6 @@ proxmox-admin-cli/
 - Use `--dry-run` flags when available
 - Test in development/test environments when possible
 
-## Performance Benchmarks (Go vs Python)
-
-| Operation | Python (ThreadPool=3) | Go (Goroutines=3) | Improvement |
-|-----------|----------------------|-------------------|-------------|
-| Create 10 snapshots | 45.2s | 8.7s | 5.2x faster |
-| Delete 20 snapshots | 52.1s | 9.3s | 5.6x faster |
-| List 50 VMs | 12.4s | 2.1s | 5.9x faster |
-| Rollback 5 VMs | 78.9s | 12.4s | 6.4x faster |
-
-*Benchmarks on Proxmox 7.4 cluster, 3 nodes, 100+ VMs*
-
-## Migration Guide
-
-### Python Modular
-- Snapshot management: `python/modular/snapshot-manager/`
-- VM management: `python/modular/vm-manager/`
-- CLI wrapper: `python/modular/pve-snapshots-cli.py`
-
-### Python → Go (AWS-Style Command Structure)
-```bash
-# Python version (flat structure)
-python3 main.py create --vmid 7303 --prefix backup
-python3 main.py backup --vmid 7303 --storage local
-
-# Go version (AWS-style hierarchy - binary name: pve)
-pve vm snapshot create --vmid 7303 --prefix backup
-pve vm backup create --vmid 7303 --storage local
-
-# Note: The Go version uses nested commands similar to AWS CLI:
-# - cluster (task, storage, network)
-# - node (resource, services, power)
-# - vm (snapshot, backup, lifecycle)
-# - container (top-level)
-```
-
-**Migration Benefits:**
-- AWS CLI-style command organization
-- 5-10x performance improvement
-- Single binary deployment (no Python environment)
-- Compile-time error detection
-- Superior concurrency handling
-- Better command discoverability with logical grouping
-
 ## Common Issues
 
 ### Go Build Issues
@@ -392,12 +269,6 @@ pve vm backup create --vmid 7303 --storage local
 - **"Package not found"**: Run `make deps` to download dependencies
 - **Build fails**: Try `make clean && make deps && make build`
 - **Cross-compilation errors**: Ensure correct GOOS/GOARCH for target platform
-
-### Python Issues
-- **"Module not found"**: Install with `pipx install` or use `uv run`
-- **"Python version too old"**: Ensure Python 3.8+ (`python3 --version`)
-- **Dependencies missing**: Run `uv sync` in module directory
-- **Type check failures**: Run `mypy .` to see specific issues
 
 ### Proxmox API Issues
 - **"Permission check failed"**: Requires proper token ACL configuration
@@ -415,7 +286,7 @@ pve vm backup create --vmid 7303 --storage local
 - **Upload fails**: Verify `permissions: contents: write` in workflow
 - **Checksums missing**: Ensure `sha256sum` available in build environment
 
-## Build and Release Process (Go)
+## Build and Release Process
 
 ### Local Build
 ```bash
@@ -440,8 +311,8 @@ make release        # Creates tar.gz/zip archives in build/release/
 **Automated Release Process**:
 1. Push a tag matching `v*` pattern:
    ```bash
-   git tag -a v1.0.1 -m "Release v1.0.1 - Bug fixes and improvements"
-   git push origin v1.0.1
+   git tag -a v1.2.0 -m "Release v1.2.0"
+   git push origin v1.2.0
    ```
 
 2. GitHub Actions automatically:
@@ -456,10 +327,3 @@ make build-all
 make release
 # Upload manually via GitHub web UI or glab
 ```
-
-**Troubleshooting CI/CD**:
-- Check workflow status: https://github.com/yg-codes/proxmox/actions
-- Verify tag format: Must start with `v` (e.g., `v1.0.1`)
-- Ensure Go version in workflow matches go.mod (1.22 in workflow, 1.21+ required)
-- Check build logs for compilation errors
-- Verify permissions for `GITHUB_TOKEN` (needs `contents: write`)

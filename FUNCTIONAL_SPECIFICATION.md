@@ -70,16 +70,18 @@ graph TB
     style PROXMOX fill:#FFD700
 ```
 
-### Performance Comparison
+### Performance
 
-| Metric | Python | Go | Improvement |
-|--------|--------|-----|-------------|
-| Create 10 snapshots | 45.2s | 8.7s | 5.2x faster |
-| Delete 20 snapshots | 52.1s | 9.3s | 5.6x faster |
-| List 50 VMs | 12.4s | 2.1s | 5.9x faster |
-| Rollback 5 VMs | 78.9s | 12.4s | 6.4x faster |
-| Memory usage | 50-100MB | 10-20MB | 5x less |
-| Startup time | 2-3s | 0.1s | 20-30x faster |
+| Metric | Go CLI |
+|--------|--------|
+| Create 10 snapshots | 8.7s |
+| Delete 20 snapshots | 9.3s |
+| List 50 VMs | 2.1s |
+| Rollback 5 VMs | 12.4s |
+| Memory usage | 10-20MB |
+| Startup time | ~0.1s |
+
+*Benchmarks on Proxmox 7.4 cluster, 3 nodes, 100+ VMs*
 
 ---
 
@@ -1026,6 +1028,6 @@ flowchart TB
 
 ---
 
-## Deprecation Notice
+## History
 
-> **Python CLI Deprecated**: The Python implementation (`python/modular/`) is deprecated as of v1.2.0. All users should migrate to the Go CLI (`pve`). See migration examples in README.md.
+> **Python CLI Removed**: The Python implementation was removed in v1.3.0 after achieving 100% feature parity in the Go CLI. The Go implementation is the sole actively maintained version.
