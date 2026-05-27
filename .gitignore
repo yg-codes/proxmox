@@ -11,6 +11,7 @@ coverage.out
 .env
 .env.local
 .env.*.local
+pve.env
 
 # IDE
 .vscode/
