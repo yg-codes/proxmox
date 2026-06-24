@@ -440,6 +440,12 @@ func initializeApp(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
+	// Resolve any 1Password (op://) credential references to plaintext before
+	// validation and authentication.
+	if err := cfg.ResolveSecrets(); err != nil {
+		return fmt.Errorf("failed to resolve credentials: %w", err)
+	}
+
 	// Override config with command-line flags
 	if batchMode {
 		cfg.CLI.BatchMode = true

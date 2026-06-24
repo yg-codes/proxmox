@@ -136,6 +136,32 @@ git push origin v1.3.0
 | `PVE_TOKEN_VALUE` | Token auth | API token secret |
 | `PVE_PASSWORD` | Password auth | User password |
 
+### 1Password Secret References
+
+Any `PVE_*` value set to an `op://` reference is resolved to plaintext at
+startup by shelling out to the 1Password CLI. The tool looks for `op.exe`
+first, then `op`, on `PATH`. References and plain values can be mixed
+freely; `op` is only invoked when a value actually starts with `op://`.
+
+**Prerequisite:** install the 1Password CLI and authenticate:
+```bash
+op signin            # Linux / macOS
+op.exe account list  # WSL-on-Windows (uses the Windows desktop app)
+```
+
+```bash
+# Set any PVE_* value to an op://<vault>/<item>/<field> reference.
+export PVE_HOST=op://SRE/proxmox/host
+export PVE_USER=op://SRE/proxmox/user
+export PVE_TOKEN_NAME=op://SRE/proxmox/token_name
+export PVE_TOKEN_VALUE=op://SRE/proxmox/credential
+```
+
+The reference format is `op://<vault>/<item>/<field>`, where `<field>` is the
+field **label** as it appears in the 1Password item. If the CLI is not signed
+in, startup fails before contacting Proxmox. See
+`pkg/onepassword/onepassword.go` for details.
+
 ### Directory Structure
 
 ```
