@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yg-codes/proxmox/pkg/onepassword"
 )
 
 // Config holds application configuration
@@ -113,6 +114,36 @@ func LoadConfig(configPath string) (*Config, error) {
 	// Config files are not supported to match Python implementation
 
 	return &config, nil
+}
+
+// ResolveSecrets resolves any Proxmox credential field that is a 1Password
+// secret reference (op://...) to its plaintext value via the op CLI. Fields
+// that are not references are left unchanged, so the op binary is only invoked
+// when at least one credential is a reference.
+func (c *Config) ResolveSecrets() error {
+	fields := []struct {
+		name string
+		ptr  *string
+	}{
+		{"PVE_HOST", &c.Proxmox.Host},
+		{"PVE_USER", &c.Proxmox.Username},
+		{"PVE_PASSWORD", &c.Proxmox.Password},
+		{"PVE_TOKEN_NAME", &c.Proxmox.TokenName},
+		{"PVE_TOKEN_VALUE", &c.Proxmox.TokenValue},
+	}
+
+	for _, f := range fields {
+		if !onepassword.IsRef(*f.ptr) {
+			continue
+		}
+		resolved, err := onepassword.Resolve(*f.ptr)
+		if err != nil {
+			return fmt.Errorf("resolving %s from 1Password: %w", f.name, err)
+		}
+		*f.ptr = resolved
+	}
+
+	return nil
 }
 
 // Validate validates the configuration
