@@ -166,7 +166,7 @@ in, startup fails before contacting Proxmox. See
 
 ```
 proxmox/
-├── cmd/                      # Cobra commands
+├── pve/                      # Cobra commands (CLI entry point)
 ├── pkg/                      # Core packages
 ├── scripts/                  # API token setup, SSH runner
 ├── .github/workflows/        # CI/CD release pipeline

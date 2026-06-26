@@ -15,7 +15,7 @@ This repository provides a comprehensive Proxmox VE management CLI written in Go
 
 ```
 proxmox/
-├── cmd/                        # CLI entry point and commands
+├── pve/                        # CLI entry point and commands
 ├── pkg/                        # Core packages
 ├── scripts/                    # Setup and utility scripts
 │   ├── create-api-token.sh     # Fast API token provisioning
@@ -103,7 +103,7 @@ pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
 
 ### Module Structure
 ```
-cmd/              # CLI entry point
+pve/              # CLI entry point
 pkg/
 ├── api/         # HTTP client and authentication
 ├── vm/          # VM operations and selection

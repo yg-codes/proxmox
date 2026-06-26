@@ -17,7 +17,7 @@ GOMOD=$(GOCMD) mod
 
 # Directories
 BUILD_DIR=build
-CMD_DIR=cmd
+CMD_DIR=pve
 
 .PHONY: all build clean test deps fmt vet lint install uninstall run help
 
