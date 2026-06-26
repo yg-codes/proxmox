@@ -187,7 +187,7 @@ proxmox/
 ├── scripts/                  # API token setup, SSH runner
 ├── .github/workflows/        # CI/CD release pipeline
 ├── .mise.toml                # mise build tasks
-├── FUNCTIONAL_SPECIFICATION.md
+├── docs/                     # Command reference, spec, demo runbook
 └── CLAUDE.md                 # Dev guidelines
 ```
 
@@ -199,7 +199,7 @@ proxmox/
 
 Binary compiles statically with version/commit/build-time injected via ldflags. No runtime dependencies beyond the Proxmox API endpoint.
 
-Full feature reference: [FUNCTIONAL_SPECIFICATION.md](FUNCTIONAL_SPECIFICATION.md)
+Full feature reference: [docs/FUNCTIONAL_SPECIFICATION.md](docs/FUNCTIONAL_SPECIFICATION.md)
 
 ---
 Last Updated: 2026-05-23
