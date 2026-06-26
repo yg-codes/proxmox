@@ -20,7 +20,7 @@ proxmox/
 ├── scripts/                    # Setup and utility scripts
 │   ├── create-api-token.sh     # Fast API token provisioning
 │   ├── setup-pve-cli-user.sh   # Full user + token setup
-│   └── pve-ssh-exec.sh         # Multi-node SSH command runner
+│   └── test-1password-integration.sh  # Manual op:// credential test
 ├── Makefile                    # Build automation
 ├── go.mod / go.sum             # Go module
 ├── .mise.toml                  # mise build tasks

@@ -11,16 +11,17 @@
 #   --token-name     API token name (default: cli-token)
 #   --realm          Authentication realm: pam, pve, ldap (default: pam)
 #   --role           Role to assign (default: PVEVMAdmin)
-#   --nodes          Comma-separated list of nodes (default: all nodes)
+#   --nodes          Comma-separated list of nodes (default: auto-discover)
 #   --dry-run        Show commands without executing
 #   --uninstall      Remove the user and token
+#   -h, --help       Show this help
 #
 # Requirements:
 #   - SSH root access to Proxmox nodes
-#   - sshpass installed for password authentication (optional)
+#   - jq installed locally (for reliable token-value parsing)
 #
 # Examples:
-#   ./setup-pve-cli-user.sh --node pve1,pve2
+#   ./setup-pve-cli-user.sh --nodes pve1,pve2
 #   ./setup-pve-cli-user.sh --user-name automation --token-name prod-token
 #   ./setup-pve-cli-user.sh --dry-run
 #   ./setup-pve-cli-user.sh --uninstall
@@ -64,7 +65,7 @@ while [[ $# -gt 0 ]]; do
             ROLE="$2"
             shift 2
             ;;
-        --nodes)
+        --nodes|--node)            # accept singular form too
             NODES="$2"
             shift 2
             ;;
@@ -81,7 +82,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo -e "${RED}Unknown option: $1${NC}"
+            echo -e "${RED}Unknown option: $1${NC}" >&2
             exit 1
             ;;
     esac
@@ -107,7 +108,7 @@ print_config() {
     echo "  Token Name:  ${TOKEN_NAME}"
     echo "  Full Token:  ${FULL_TOKEN_ID}"
     echo "  Role:        ${ROLE}"
-    echo "  Nodes:       ${NODES:-<all nodes>}"
+    echo "  Nodes:       ${NODES:-<auto-discover>}"
     echo "  Dry Run:     ${DRY_RUN}"
     echo "  Uninstall:   ${UNINSTALL}"
     echo ""
@@ -139,26 +140,29 @@ run_ssh() {
 get_nodes() {
     if [[ -n "$NODES" ]]; then
         echo "$NODES" | tr ',' ' '
-    else
-        # Try to get nodes from first accessible node
-        local first_node="${NODES%%,*}"
-        if [[ -z "$first_node" ]]; then
-            # Fallback: try common node names
-            for node in pve pve1 pve1.local proxmox; do
-                if ssh $SSH_OPTS "$node" "echo ok" &>/dev/null; then
-                    first_node="$node"
-                    break
-                fi
-            done
-        fi
+        return
+    fi
 
-        if [[ -n "$first_node" ]]; then
-            ssh $SSH_OPTS "$first_node" "pvesh get /nodes --output-format json-pretty" 2>/dev/null | \
-                grep -oP '"node"\s*:\s*"\K[^"]+' | tr '\n' ' ' || echo "$first_node"
-        else
-            echo -e "${RED}Error: Could not determine nodes. Please specify with --nodes${NC}"
-            exit 1
+    # Auto-discover: query the cluster via the first reachable common node.
+    local first_node=""
+    for node in pve pve1 pve1.local proxmox; do
+        if ssh $SSH_OPTS "$node" "echo ok" &>/dev/null; then
+            first_node="$node"
+            break
         fi
+    done
+
+    if [[ -z "$first_node" ]]; then
+        echo -e "${RED}Error: Could not auto-discover nodes. Please specify with --nodes${NC}" >&2
+        exit 1
+    fi
+
+    # Query the cluster; fall back to the single discovered node if the query fails.
+    local discovered
+    if discovered=$(ssh $SSH_OPTS "$first_node" "pvesh get /nodes --output-format json" 2>/dev/null | jq -r '.[].node' 2>/dev/null); then
+        echo "$discovered" | tr '\n' ' '
+    else
+        echo "$first_node"
     fi
 }
 
@@ -171,11 +175,11 @@ create_user() {
     # Create user
     run_ssh "$node" "pveum user add ${USER_ID}" "Creating user ${USER_ID}" || true
 
-    # Set password if realm is pam (system user)
+    # Set password only for pam (system) realm
     if [[ "$REALM" == "pam" ]]; then
         local password
         echo -e "\n${YELLOW}Enter password for ${USER_ID} (leave empty for random):${NC}"
-        read -s password
+        read -rs password
         echo ""
 
         if [[ -z "$password" ]]; then
@@ -184,10 +188,26 @@ create_user() {
         fi
 
         if ! $DRY_RUN; then
-            echo "$USER_NAME:$password" | ssh $SSH_OPTS "$node" "chpasswd"
+            # Pipe via stdin to avoid leaking the password through argv/SSH command line.
+            printf '%s:%s\n' "$USER_NAME" "$password" | ssh $SSH_OPTS "$node" "chpasswd"
             echo -e "  ${GREEN}✓ Password set${NC}"
         fi
     fi
+}
+
+# Extract token secret value from pveum output (JSON preferred, grep fallback).
+extract_token_value() {
+    local output="$1"
+    local value
+    if value=$(echo "$output" | jq -r '.value // empty' 2>/dev/null) && [[ -n "$value" ]]; then
+        echo "$value"
+        return 0
+    fi
+    echo "$output" \
+        | grep -oP 'value\s*│\s*\K\S+' 2>/dev/null \
+        || echo "$output" | grep -oP '^\s*value\s*:?\s*\K[0-9a-f-]+' 2>/dev/null \
+        || echo "$output" | grep -oP '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' 2>/dev/null \
+        || true
 }
 
 # Create API token
@@ -196,7 +216,7 @@ create_token() {
 
     echo -e "\n${BLUE}=== Creating API Token ===${NC}"
 
-    # Create token
+    # Create token (JSON output for reliable parsing; human-readable fallback for old PVE)
     local output
     if $DRY_RUN; then
         echo -e "  ${BLUE}[DRY-RUN]${NC} ssh $node \"pveum user token add ${USER_ID} ${TOKEN_NAME} --privsep 0\""
@@ -204,12 +224,12 @@ create_token() {
         return 0
     fi
 
-    output=$(ssh $SSH_OPTS "$node" "pveum user token add ${USER_ID} ${TOKEN_NAME} --privsep 0" 2>&1)
+    output=$(ssh $SSH_OPTS "$node" "pveum user token add ${USER_ID} ${TOKEN_NAME} --privsep 0 --output-format json 2>/dev/null || pveum user token add ${USER_ID} ${TOKEN_NAME} --privsep 0 2>&1")
 
-    if echo "$output" | grep -q "value"; then
-        local token_value
-        token_value=$(echo "$output" | grep -oP '├\s*value\s*│\s*\K[^│]+' | tr -d ' ')
+    local token_value
+    token_value=$(extract_token_value "$output")
 
+    if [[ -n "$token_value" ]]; then
         echo -e "  ${GREEN}✓ Token created${NC}"
         echo ""
         echo -e "${GREEN}========================================${NC}"
@@ -292,9 +312,6 @@ uninstall() {
     run_ssh "$node" "pveum user token remove ${USER_ID} ${TOKEN_NAME}" \
         "Removing token ${TOKEN_NAME}" || true
 
-    # Remove ACL entries (this happens automatically when user is removed)
-    # run_ssh "$node" "pveum acl delete / -tokens ${FULL_TOKEN_ID}" "Removing ACL for token" || true
-
     # Remove user
     run_ssh "$node" "pveum user delete ${USER_ID}" \
         "Removing user ${USER_ID}" || true
@@ -316,7 +333,7 @@ main() {
     FIRST_NODE=$(echo "$NODE_LIST" | awk '{print $1}')
 
     if [[ -z "$FIRST_NODE" ]]; then
-        echo -e "${RED}Error: No accessible nodes found${NC}"
+        echo -e "${RED}Error: No accessible nodes found${NC}" >&2
         exit 1
     fi
 
