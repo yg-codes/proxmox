@@ -10,6 +10,7 @@ package onepassword
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -23,6 +24,9 @@ func IsRef(v string) bool {
 	return strings.HasPrefix(v, refPrefix)
 }
 
+// ErrCLINotFound is returned when neither op.exe nor op is on PATH.
+var ErrCLINotFound = errors.New("1Password CLI not found: install 'op' (or 'op.exe') and ensure it is on PATH (https://developer.1password.com/docs/cli/)")
+
 // opBinary locates the 1Password CLI, preferring the Windows op.exe binary
 // and falling back to op. It returns the resolved path or an error if neither
 // is found on PATH.
@@ -32,13 +36,20 @@ func opBinary() (string, error) {
 			return path, nil
 		}
 	}
-	return "", fmt.Errorf("1Password CLI not found: install 'op' (or 'op.exe') and ensure it is on PATH (https://developer.1password.com/docs/cli/)")
+	return "", ErrCLINotFound
 }
 
-// Resolve reads a single op:// secret reference and returns its plaintext
-// value. Stderr from the op CLI is surfaced on error so failures such as a
-// missing session ("not signed in") are actionable.
-func Resolve(ref string) (string, error) {
+// resolveFunc holds the mechanism used to resolve an op:// reference to its
+// plaintext. It is a package-level variable so tests can swap it without the
+// 1Password CLI being installed. The default implementation, opResolve,
+// shells out to op (preferring op.exe). Callers must not reassign it outside
+// of tests.
+var resolveFunc = opResolve
+
+// opResolve reads a single op:// secret reference by shelling out to the op
+// CLI. Stderr is surfaced on error so failures such as a missing session
+// ("not signed in") are actionable.
+func opResolve(ref string) (string, error) {
 	bin, err := opBinary()
 	if err != nil {
 		return "", err
@@ -60,6 +71,13 @@ func Resolve(ref string) (string, error) {
 	return strings.TrimSpace(stdout.String()), nil
 }
 
+// Resolve reads a single op:// secret reference and returns its plaintext
+// value. It delegates to the current resolveFunc; in production this shells
+// out to the op CLI.
+func Resolve(ref string) (string, error) {
+	return resolveFunc(ref)
+}
+
 // ResolveValue resolves v if it is an op:// reference, otherwise returns v
 // unchanged. This lets configuration values mix plain secrets and 1Password
 // references transparently.
@@ -69,3 +87,13 @@ func ResolveValue(v string) (string, error) {
 	}
 	return Resolve(v)
 }
+
+// WithResolver replaces the package resolver with fn for the duration of the
+// returned restore function, then puts the production resolver back. It is
+// intended for tests that need to fake success or failure without the op CLI.
+func WithResolver(fn func(string) (string, error)) func() {
+	prev := resolveFunc
+	resolveFunc = fn
+	return func() { resolveFunc = prev }
+}
+
