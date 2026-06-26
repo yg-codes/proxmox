@@ -22,8 +22,8 @@
 #                           or --nodes auto-discovery succeeds.
 #   --nodes <n1,n2,...>     Comma-separated node list (uses the first as target;
 #                           user/token objects are cluster-wide).
-#   -u, --user <name>       Username, or "user@realm" (default: pve-admin)
-#   -t, --token <name>      Token name (default: admin-token)
+#   -u, --user <name>       Username, or "user@realm" (required for all actions)
+#   -t, --token <name>      Token name (required for create/add-token/revoke-token)
 #   --realm <realm>         Auth realm: pam, pve, ldap (default: pve)
 #                           An explicit --realm overrides any realm embedded in --user.
 #   --role <role>           Role to assign at / (default: PVEVMAdmin)
@@ -75,6 +75,8 @@ TOKEN_NAME="admin-token"
 REALM="pve"
 ROLE="PVEVMAdmin"
 REALM_EXPLICIT=false
+USER_INPUT=false
+TOKEN_INPUT=false
 NODE=""
 NODES=""
 LOCAL_MODE=false
@@ -96,8 +98,8 @@ while [[ $# -gt 0 ]]; do
     -a|--action)        ACTION="$2"; shift 2 ;;
     -n|--node)          NODE="$2"; shift 2 ;;
     --nodes|--node)     NODES="$2"; shift 2 ;;
-    -u|--user|--user-name) USER_NAME="$2"; shift 2 ;;
-    -t|--token|--token-name) TOKEN_NAME="$2"; shift 2 ;;
+    -u|--user|--user-name) USER_NAME="$2"; USER_INPUT=true; shift 2 ;;
+    -t|--token|--token-name) TOKEN_NAME="$2"; TOKEN_INPUT=true; shift 2 ;;
     --realm)            REALM="$2"; REALM_EXPLICIT=true; shift 2 ;;
     --role)             ROLE="$2"; shift 2 ;;
     --local)            LOCAL_MODE=true; shift ;;
@@ -110,15 +112,18 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Backward-compatible positional shortcut: <node> [user] [token] => create.
+# Flip USER_INPUT/TOKEN_INPUT only when the positional is actually present, so a
+# bare <node> (no user) still fails the required-arg check rather than silently
+# targeting the default user.
 if [[ -z "$ACTION" ]]; then
   if $LOCAL_MODE; then
     # --local with positionals: [user] [token]
-    USER_NAME="${POSITIONAL[0]:-$USER_NAME}"
-    TOKEN_NAME="${POSITIONAL[1]:-$TOKEN_NAME}"
+    [[ -n "${POSITIONAL[0]:-}" ]] && { USER_NAME="${POSITIONAL[0]}"; USER_INPUT=true; }
+    [[ -n "${POSITIONAL[1]:-}" ]] && { TOKEN_NAME="${POSITIONAL[1]}"; TOKEN_INPUT=true; }
   elif [[ ${#POSITIONAL[@]} -ge 1 ]]; then
     NODE="${POSITIONAL[0]}"
-    USER_NAME="${POSITIONAL[1]:-$USER_NAME}"
-    TOKEN_NAME="${POSITIONAL[2]:-$TOKEN_NAME}"
+    [[ -n "${POSITIONAL[1]:-}" ]] && { USER_NAME="${POSITIONAL[1]}"; USER_INPUT=true; }
+    [[ -n "${POSITIONAL[2]:-}" ]] && { TOKEN_NAME="${POSITIONAL[2]}"; TOKEN_INPUT=true; }
   fi
   ACTION="create"
 fi
@@ -145,6 +150,22 @@ fi
 case "$ACTION" in
   create|add-token|revoke-token|remove|list) : ;;
   *) echo -e "${RED}Error: unknown --action '$ACTION'${NC}" >&2; print_help 1 ;;
+esac
+
+# Require --user for every action — there is no sensible default target for a
+# token operation, so a missing flag must fail loudly, not act on pve-admin.
+if ! $USER_INPUT; then
+  echo -e "${RED}Error: --user is required for action '$ACTION'.${NC}" >&2
+  exit 1
+fi
+# Require --token for actions that name/create a specific token.
+case "$ACTION" in
+  create|add-token|revoke-token)
+    if ! $TOKEN_INPUT; then
+      echo -e "${RED}Error: --token is required for action '$ACTION'.${NC}" >&2
+      exit 1
+    fi
+    ;;
 esac
 
 USER_ID="${USER_NAME}@${REALM}"

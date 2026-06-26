@@ -41,8 +41,8 @@ the user, adding a token never recreates the user.
 | `-a, --action <ACTION>` | `create` | `create \| add-token \| revoke-token \| remove \| list` |
 | `-n, --node <node>` | — | Proxmox node (SSH target). Required unless `--nodes`/`--local` resolves one |
 | `--nodes <n1,n2,...>` | — | Comma-separated list; first entry is the target (objects are cluster-wide) |
-| `-u, --user <name>` | `pve-admin` | Username, or `user@realm` (realm is split out) |
-| `-t, --token <name>` | `admin-token` | Token name |
+| `-u, --user <name>` | — (required) | Username, or `user@realm` (realm is split out) |
+| `-t, --token <name>` | — | Token name; required for `create`/`add-token`/`revoke-token` |
 | `--realm <realm>` | `pve` | Auth realm: `pam`, `pve`, `ldap`. Overrides any realm in `--user` |
 | `--role <role>` | `PVEVMAdmin` | Role to assign at `/` |
 | `--local` | off | Run directly on this host (no SSH) — for use ON a node |
