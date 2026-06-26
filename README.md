@@ -27,6 +27,22 @@ mise run install    # builds + installs pve to $GOPATH/bin
 make install
 ```
 
+**With mise (tracks latest release):**
+```toml
+# ~/.config/mise/config.toml
+"github:yg-codes/proxmox[pve]" = "latest"
+```
+```bash
+mise install -g pve      # install the latest GitHub release
+mise upgrade pve         # pull each new release after a tag ships
+pve --version            # -> pve 1.5.0 (commit: ..., built: ...)
+```
+
+> ⚠️ Do **not** use the `go:` backend (`"go:github.com/yg-codes/proxmox/pve"`). It runs
+> `go install`, which bypasses the Makefile/goreleaser ldflags that inject the version,
+> so `pve --version` reports `dev (commit: none, built: unknown)`. The `github:` backend
+> above downloads the goreleaser-built release binary, which has the version baked in.
+
 ### Configure
 
 Set environment variables for Proxmox API access:
@@ -171,7 +187,7 @@ proxmox/
 ├── scripts/                  # API token setup, SSH runner
 ├── .github/workflows/        # CI/CD release pipeline
 ├── .mise.toml                # mise build tasks
-├── FUNCTIONAL_SPECIFICATION.md
+├── docs/                     # Command reference, spec, demo runbook
 └── CLAUDE.md                 # Dev guidelines
 ```
 
@@ -183,7 +199,7 @@ proxmox/
 
 Binary compiles statically with version/commit/build-time injected via ldflags. No runtime dependencies beyond the Proxmox API endpoint.
 
-Full feature reference: [FUNCTIONAL_SPECIFICATION.md](FUNCTIONAL_SPECIFICATION.md)
+Full feature reference: [docs/FUNCTIONAL_SPECIFICATION.md](docs/FUNCTIONAL_SPECIFICATION.md)
 
 ---
 Last Updated: 2026-05-23

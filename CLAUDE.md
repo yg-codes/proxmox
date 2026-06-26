@@ -24,7 +24,7 @@ proxmox/
 ├── Makefile                    # Build automation
 ├── go.mod / go.sum             # Go module
 ├── .mise.toml                  # mise build tasks
-└── FUNCTIONAL_SPECIFICATION.md # Complete feature reference
+└── docs/                      # COMMAND_REFERENCE.md, FUNCTIONAL_SPECIFICATION.md, DEMO_RUNBOOK.md
 ```
 
 ## Quick Reference
@@ -33,7 +33,7 @@ proxmox/
 make fmt && make vet && make test && make build
 ```
 
-Complete command and parameter documentation: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
+Complete command and parameter documentation: [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md)
 
 ## Development Commands
 
@@ -70,7 +70,7 @@ make docker-run ARGS='--help'
 make build && make install
 ```
 
-Usage examples: [README.md](README.md) | Command reference: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
+Usage examples: [README.md](README.md) | Command reference: [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md)
 
 ## Configuration
 
