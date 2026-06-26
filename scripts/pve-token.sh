@@ -95,13 +95,13 @@ print_help() {
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -a|--action)        ACTION="$2"; shift 2 ;;
-    -n|--node)          NODE="$2"; shift 2 ;;
-    --nodes|--node)     NODES="$2"; shift 2 ;;
-    -u|--user|--user-name) USER_NAME="$2"; USER_INPUT=true; shift 2 ;;
-    -t|--token|--token-name) TOKEN_NAME="$2"; TOKEN_INPUT=true; shift 2 ;;
-    --realm)            REALM="$2"; REALM_EXPLICIT=true; shift 2 ;;
-    --role)             ROLE="$2"; shift 2 ;;
+    -a|--action)        [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; ACTION="$2"; shift 2 ;;
+    -n|--node)          [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; NODE="$2"; shift 2 ;;
+    --nodes)            [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; NODES="$2"; shift 2 ;;
+    -u|--user|--user-name) [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; USER_NAME="$2"; USER_INPUT=true; shift 2 ;;
+    -t|--token|--token-name) [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; TOKEN_NAME="$2"; TOKEN_INPUT=true; shift 2 ;;
+    --realm)            [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; REALM="$2"; REALM_EXPLICIT=true; shift 2 ;;
+    --role)             [[ $# -ge 2 ]] || { echo -e "${RED}Error: $1 requires an argument${NC}" >&2; exit 2; }; ROLE="$2"; shift 2 ;;
     --local)            LOCAL_MODE=true; shift ;;
     --dry-run)          DRY_RUN=true; shift ;;
     -h|--help)          print_help 0 ;;
