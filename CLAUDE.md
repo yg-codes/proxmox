@@ -18,8 +18,7 @@ proxmox/
 ├── pve/                        # CLI entry point and commands
 ├── pkg/                        # Core packages
 ├── scripts/                    # Setup and utility scripts
-│   ├── create-api-token.sh     # Fast API token provisioning
-│   ├── setup-pve-cli-user.sh   # Full user + token setup
+│   ├── pve-token.sh            # API user/token manager (create/add/revoke/remove/list)
 │   └── test-1password-integration.sh  # Manual op:// credential test
 ├── Makefile                    # Build automation
 ├── go.mod / go.sum             # Go module
@@ -96,7 +95,7 @@ export PVE_PASSWORD=your-password
 pveum aclmod / -token 'username@pam!token-name' -role PVEVMAdmin
 
 # Or use the setup script:
-./scripts/create-api-token.sh pve1
+./scripts/pve-token.sh pve1
 ```
 
 ## Architecture

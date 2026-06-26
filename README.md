@@ -58,7 +58,7 @@ For password auth instead of token: set `PVE_PASSWORD` instead of `PVE_TOKEN_NAM
 
 To create an API token on a Proxmox node:
 ```bash
-./scripts/create-api-token.sh pve1
+./scripts/pve-token.sh pve1
 ```
 
 ### Verify
