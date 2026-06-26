@@ -49,7 +49,7 @@ To create an API token on a Proxmox node:
 
 ```bash
 pve --version
-# pve v1.3.0 (commit: d5eef68, built: 2026-05-23)
+# pve v1.4.0 (commit: edd790a, built: 2026-06-26)
 
 pve node list
 # NAME    STATUS   CPU   MEM       UPTIME
@@ -59,8 +59,8 @@ pve node list
 ### Release a New Version
 
 ```bash
-git tag -a v1.3.0 -m "Release v1.3.0"
-git push origin v1.3.0
+git tag -a v1.4.0 -m "Release v1.4.0"
+git push origin v1.4.0
 # GitHub Actions builds 6-platform binaries automatically (linux/darwin/windows × amd64/arm64)
 ```
 

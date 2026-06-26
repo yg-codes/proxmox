@@ -275,8 +275,8 @@ All 6 platforms (linux/darwin/windows × amd64/arm64) are built by the GoRelease
 **Automated Release Process**:
 1. Push a tag matching `v*` pattern:
    ```bash
-   git tag -a v1.3.0 -m "Release v1.3.0"
-   git push origin v1.3.0
+   git tag -a v1.4.0 -m "Release v1.4.0"
+   git push origin v1.4.0
    ```
 
 2. GitHub Actions automatically:
