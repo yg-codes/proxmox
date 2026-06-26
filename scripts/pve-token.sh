@@ -22,9 +22,10 @@
 #                           or --nodes auto-discovery succeeds.
 #   --nodes <n1,n2,...>     Comma-separated node list (uses the first as target;
 #                           user/token objects are cluster-wide).
-#   -u, --user <name>       Username without realm (default: pve-admin)
+#   -u, --user <name>       Username, or "user@realm" (default: pve-admin)
 #   -t, --token <name>      Token name (default: admin-token)
-#   --realm <realm>         Auth realm: pam, pve, ldap (default: pam)
+#   --realm <realm>         Auth realm: pam, pve, ldap (default: pve)
+#                           An explicit --realm overrides any realm embedded in --user.
 #   --role <role>           Role to assign at / (default: PVEVMAdmin)
 #   --local                 Run directly on this host (no SSH) — for use ON a node
 #   --dry-run               Show commands without executing
@@ -71,8 +72,9 @@ NC='\033[0m'
 ACTION=""
 USER_NAME="pve-admin"
 TOKEN_NAME="admin-token"
-REALM="pam"
+REALM="pve"
 ROLE="PVEVMAdmin"
+REALM_EXPLICIT=false
 NODE=""
 NODES=""
 LOCAL_MODE=false
@@ -96,7 +98,7 @@ while [[ $# -gt 0 ]]; do
     --nodes|--node)     NODES="$2"; shift 2 ;;
     -u|--user|--user-name) USER_NAME="$2"; shift 2 ;;
     -t|--token|--token-name) TOKEN_NAME="$2"; shift 2 ;;
-    --realm)            REALM="$2"; shift 2 ;;
+    --realm)            REALM="$2"; REALM_EXPLICIT=true; shift 2 ;;
     --role)             ROLE="$2"; shift 2 ;;
     --local)            LOCAL_MODE=true; shift ;;
     --dry-run)          DRY_RUN=true; shift ;;
@@ -127,6 +129,17 @@ fi
 # not with -z (a non-empty "false" would wrongly short-circuit -z).
 if [[ -z "$NODE" ]] && ! $LOCAL_MODE && [[ ${#POSITIONAL[@]} -ge 1 && "$ACTION" != "create" ]]; then
   NODE="${POSITIONAL[0]}"
+fi
+
+# Normalize user input: accept "user@realm" via --user (or positional), and
+# split the realm out of it. Precedence: explicit --realm > embedded @realm >
+# default. Runs once, after both parse paths converge, before USER_ID is built.
+if [[ "$USER_NAME" == *@* ]]; then
+  embedded_realm="${USER_NAME##*@}"     # part after the last @
+  USER_NAME="${USER_NAME%@*}"           # part before the last @
+  if ! $REALM_EXPLICIT; then
+    REALM="$embedded_realm"
+  fi
 fi
 
 case "$ACTION" in
