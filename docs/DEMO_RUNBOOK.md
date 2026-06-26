@@ -163,11 +163,12 @@ pve vm snapshot list --vmid 8701 2>&1 | tail -15
 pve vm snapshot create --vmid 8701 --prefix demo -y 2>&1 | tail -8
 ```
 
-**Expected**: `✅ Snapshot 'demo-fsx-dev-scraper01-<YYYYMMDD-HHMM>' created successfully for VM 8701`. The generated name is `<prefix>-<vmname>-<YYYYMMDD-HHMM>` (timestamp is minute-granular). **Capture the exact name** for Steps 2.4–2.6:
+**Expected**: `✅ Snapshot 'demo-fsx-dev-scraper01-<YYYYMMDD-HHMM>' created successfully for VM 8701`. The generated name is `<prefix>-<vmname>-<YYYYMMDD-HHMM>`, **truncated to 40 chars total** (`pkg/snapshot/operations.go` `maxSnapshotNameLength`) — long VM names can lose the `-HHMM` suffix, so the suffix is **not** guaranteed. **Capture the exact name** for Steps 2.4–2.6 (this variable is the only input those steps use — re-run the capture in the same shell if you skipped it, or a stale value will make rollback/delete fail with `snapshot '...' not found`):
 
 ```bash
-SNAP=$(pve vm snapshot list --vmid 8701 2>&1 | grep -oP 'demo-fsx-dev-scraper01-\d+-\d+')
+SNAP=$(pve vm snapshot list --vmid 8701 2>&1 | grep -oP 'demo-fsx-dev-scraper01-\S+')
 echo "Captured: $SNAP"
+[ -z "$SNAP" ] && echo "ABORT: no demo snapshot captured — do not proceed to 2.4"
 ```
 
 **Result**: ✅ *(to be observed — record the captured snapshot name)*
@@ -259,11 +260,12 @@ pve vm snapshot list --vmname fsx-dev-scraper01 2>&1 | tail -15
 pve vm snapshot create --vmname fsx-dev-scraper01 --prefix vndemo -y 2>&1 | tail -8
 ```
 
-**Expected**: `✅ Snapshot 'vndemo-fsx-dev-scraper01-<YYYYMMDD-HHMM>' created successfully for VM 8701`. **Capture the exact name** for Steps 2B.4–2B.6:
+**Expected**: `✅ Snapshot 'vndemo-fsx-dev-scraper01-<YYYYMMDD-HHMM>' created successfully for VM 8701`. The generated name follows the same 40-char truncation rule as Step 2.2 — the `-HHMM` suffix is **not** guaranteed for long names. **Capture the exact name** for Steps 2B.4–2B.6 (re-run this capture in the same shell if you skipped it, or a stale value will make rollback/delete fail):
 
 ```bash
-VNSNAP=$(pve vm snapshot list --vmname fsx-dev-scraper01 2>&1 | grep -oP 'vndemo-fsx-dev-scraper01-\d+-\d+')
+VNSNAP=$(pve vm snapshot list --vmname fsx-dev-scraper01 2>&1 | grep -oP 'vndemo-fsx-dev-scraper01-\S+')
 echo "Captured: $VNSNAP"
+[ -z "$VNSNAP" ] && echo "ABORT: no vndemo snapshot captured — do not proceed to 2B.4"
 ```
 
 **Result**: ✅ *(to be observed)*
@@ -355,15 +357,20 @@ pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bf_modulej
 pve vm snapshot create --vmid 8701,7303,7305 --prefix bulkdemo -y 2>&1 | tail -20
 ```
 
-**Expected**: Three `✅ VM <id> (<name>): Snapshot ... created successfully (<dur>s)` lines, then a `BULK OPERATION SUMMARY` block ending `Total Operations: 3`, `Successful: 3 (100.0%)`, `Failed: 0 (0.0%)`. With concurrency capped at 2, one VM finishes slightly after the other two. **Capture all three names** using:
+**Expected**: Three `✅ VM <id> (<name>): Snapshot ... created successfully (<dur>s)` lines, then a `BULK OPERATION SUMMARY` block ending `Total Operations: 3`, `Successful: 3 (100.0%)`, `Failed: 0 (0.0%)`. With concurrency capped at 2, one VM finishes slightly after the other two.
+
+> **⚠️ This capture block is load-bearing — Steps 3.4 and 3.6 will fail without it.** A generated name embeds the VM's name and a timestamp, so it cannot be predicted; it must be read back from `list`. The `SNAP` map populated here is the **only** input the rollback/delete loops use. If you skip it (or re-run this runbook in a shell that still holds a stale map from an earlier part), the loops will target wrong/old names and every VM will fail with `snapshot '...' not found`. **Run this block now, and confirm all three lines print a non-empty `bulkdemo-*` name before continuing.**
 
 ```bash
 declare -A SNAP
 for vmid in 8701 7303 7305; do
   SNAP[$vmid]=$(pve vm snapshot list --vmid "$vmid" 2>&1 | grep -oP 'bulkdemo-\S+')
   echo "VM $vmid: ${SNAP[$vmid]}"
+  [ -z "${SNAP[$vmid]}" ] && { echo "ABORT: no bulkdemo snapshot captured for VM $vmid — do not proceed to 3.4"; break; }
 done
 ```
+
+> **Note on the generated name format:** the name is `<prefix>-<vmname>-<YYYYMMDD-HHMM>`, then **truncated to 40 chars** (`pkg/snapshot/operations.go` `maxSnapshotNameLength`). Long VM names lose the `-HHMM` suffix — e.g. with prefix `bulkdemo`, VM `fsx-dev-scraper01` (short) yields `bulkdemo-fsx-dev-scraper01-20260626-1727`, but `fsx-dev-workstation03` (long) yields `bulkdemo-fsx-dev-workstation03-20260626` (date only). **Do not assume the timestamp suffix is present** — always capture the exact name from `list`.
 
 **Result**: ✅ *(to be observed — record the three captured snapshot names)*
 
@@ -475,15 +482,20 @@ pve vm snapshot create \
   --prefix bulkvn -y 2>&1 | tail -20
 ```
 
-**Expected**: Three `✅ ... created successfully` lines + `BULK OPERATION SUMMARY` with `Total Operations: 3`, `Successful: 3 (100.0%)`. **Capture all three** (keyed by name):
+**Expected**: Three `✅ ... created successfully` lines + `BULK OPERATION SUMMARY` with `Total Operations: 3`, `Successful: 3 (100.0%)`.
+
+> **⚠️ This capture block is load-bearing — Steps 3B.4 and 3B.6 will fail without it**, for the same reason as Step 3.2. The `VNSNAP` map populated here is the **only** input the rollback/delete loops use. If you skip it, or run this in a shell holding a stale map from Part 2B, the loops target wrong/old names and every VM fails with `snapshot '...' not found`. **Run this block now and confirm all three lines print a non-empty `bulkvn-*` name before continuing.** (This is exactly the failure mode that orphaned snapshots during the first live run of this runbook.)
 
 ```bash
 declare -A VNSNAP
 for name in fsx-dev-scraper01 fsx-dev-workstation03 fsx-dev-workstation05; do
   VNSNAP[$name]=$(pve vm snapshot list --vmname "$name" 2>&1 | grep -oP 'bulkvn-\S+')
   echo "$name: ${VNSNAP[$name]}"
+  [ -z "${VNSNAP[$name]}" ] && { echo "ABORT: no bulkvn snapshot captured for $name — do not proceed to 3B.4"; break; }
 done
 ```
+
+> **Note on the generated name format:** the name is `<prefix>-<vmname>-<YYYYMMDD-HHMM>`, truncated to 40 chars total (`pkg/snapshot/operations.go` `maxSnapshotNameLength`). The longer VM names here (`fsx-dev-workstation03/05`) lose the `-HHMM` suffix — e.g. `bulkvn-fsx-dev-workstation03-20260626-17` — while the shorter one (`fsx-dev-scraper01`) keeps it (`bulkvn-fsx-dev-scraper01-20260626-1730`). **Do not assume the suffix is present** — always capture the exact name from `list`.
 
 **Result**: ✅ *(to be observed — record the three captured snapshot names)*
 
@@ -614,6 +626,8 @@ cd / && rm -rf /tmp/pve-release-test && ls -d /tmp/pve-release-test 2>&1 || echo
 | `pve snapshot <verb>` fails with "unknown command" | You hit the stale-help-text gotcha — use **`pve vm snapshot <verb>`** instead |
 | `--snapshot_name` rejected | Wrong flag — use **`--snapshot`** |
 | Generated name capture returns empty | The `grep -oP` pattern expects `<prefix>-<vmname>-<TS>`; re-run `pve vm snapshot list --vmid <id>` and copy the exact name manually |
+| Rollback/delete fails `snapshot '...' not found` for **every** VM | The `SNAP`/`VNSNAP` map is empty or **stale** (left over from an earlier part in the same shell). Re-run the Step 2.2 / 2B.2 / 3.2 / 3B.2 capture block in the current shell and confirm non-empty names before retrying |
+| Generated name is missing the `-HHMM` suffix | Not a bug — names are truncated to 40 chars (`pkg/snapshot/operations.go` `maxSnapshotNameLength`); long VM names lose the suffix. Capture the exact name from `list`; never hardcode or assume the timestamp |
 
 This runbook is non-destructive by design: every snapshot it creates it also deletes, and rollbacks target snapshots taken seconds earlier (no real disk-state change). The only irreversible operation would be deleting a snapshot **not** created here — hence the explicit "do not touch `bf_modulejail`" and "never `--all`" callouts.
 
