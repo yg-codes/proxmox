@@ -740,7 +740,7 @@ pve container list
 
 ```mermaid
 graph TB
-    subgraph CMD["cmd/ (CLI Layer)"]
+    subgraph CMD["pve/ (CLI Layer)"]
         MAIN[main.go<br/>Root & Commands]
     end
 
@@ -824,7 +824,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI as cmd/main.go
+    participant CLI as pve/main.go
     participant Pkg as pkg/*
     participant API as pkg/api
     participant PVE as Proxmox VE
