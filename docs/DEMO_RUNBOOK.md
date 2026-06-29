@@ -21,10 +21,10 @@ This runbook installs the released `pve` binary, points it at the `fsx-dev` Prox
 | VMID | Name | Node | Role in test |
 |------|------|------|--------------|
 | 8701 | fsx-dev-scraper01 | fsx-dev-pve22 | single-VM lifecycle (Parts 2/2B) + bulk (Parts 3/3B) |
-| 7303 | fsx-dev-workstation03 | fsx-dev-pve23 | bulk only (Parts 3/3B) — has a pre-existing snapshot `bf_modulejail` that must NOT be touched |
+| 7303 | fsx-dev-workstation03 | fsx-dev-pve23 | bulk only (Parts 3/3B) |
 | 7305 | fsx-dev-workstation05 | fsx-dev-pve21 | bulk only (Parts 3/3B) |
 
-> **`bf_modulejail` preservation invariant:** VM 7303 carries a pre-existing snapshot (`bf_modulejail`) that this runbook did not create. Every bulk create/delete loop targets snapshots by a `bulkdemo-*` / `bulkvn-*` name prefix, so `bf_modulejail` is never selected. The final-state checks (Steps 4.1) explicitly assert it remains. If it ever disappears, stop and escalate — do not attempt to recreate it.
+> **Pre-existing snapshots:** all three test VMs start with no user-created snapshots. The bulk create/delete loops target snapshots exclusively by a `bulkdemo-*` / `bulkvn-*` name prefix, so any other snapshot a VM happens to carry is never selected. The final-state checks (Step 4.1) assert that only the runbook's own test prefixes were created and removed.
 
 > **Why these results are pre-filled:** The ✅ Result lines record the *expected* outcome. The validator executing this runbook should **overwrite each Result** with their own observed output (or mark ❌ on deviation). Result lines marked `*(to be observed)*` have not yet been run against the live cluster.
 
@@ -34,7 +34,7 @@ This runbook installs the released `pve` binary, points it at the `fsx-dev` Prox
 > 3. **Bulk is just multi-value `--vmid` / `--vmname`** — there is **no** `bulk` subcommand and **no** `--batch` flag for snapshot ops. Pass comma-separated values to the ordinary `create`/`rollback`/`delete` verbs (e.g. `--vmid 8701,7303,7305`). The two-VM/keyword/wildcard/range selectors (`running`, `stopped`, `all`, `72*`, `7201-7205`, `i`) also expand to bulk targets. `pve vm bulk ...` exists but is for **power/backup ops only** — not snapshots.
 > 4. **Default concurrency is 2** (`MaxConcurrentSnapshots`). With 3 VMs targeted, the third VM completes shortly after the first two — this staggered completion is expected, not a hang. There is **no** `--workers` / `--concurrency` flag; raise it via config (`max_concurrent_snapshots`) if needed.
 > 5. **Bulk output = per-VM lines + a summary block.** Each VM logs a `✅ VM <id> (<name>): ...` line; the run ends with a `BULK OPERATION SUMMARY` showing `Total Operations:`, `Successful: N (X.X%)`, `Failed:`. The sibling tool's summary looks similar but is not identical — do not grep the sibling's exact strings.
-> 6. **`--all` on delete is a different (worse) path.** `pve vm snapshot delete --vmid ... --all` deletes *every* snapshot of each VM sequentially with **no concurrency and no summary block**, and would destroy `bf_modulejail` on 7303. **Never use `--all` in this runbook** — delete by explicit per-VM name via the loops in Steps 3.6 / 3B.6.
+> 6. **`--all` on delete is a different (worse) path.** `pve vm snapshot delete --vmid ... --all` deletes *every* snapshot of each VM sequentially with **no concurrency and no summary block**, including any snapshot the runbook did not create. **Never use `--all` in this runbook** — delete by explicit per-VM name via the loops in Steps 3.6 / 3B.6.
 
 ---
 
@@ -44,7 +44,7 @@ This runbook installs the released `pve` binary, points it at the `fsx-dev` Prox
 - An **API token** on the `fsx-dev` cluster with at least `PVEVMAdmin` on the target VM (and the VM's node). The token name is the plain label; the token value is the secret (or an `op://` reference).
 - **1Password CLI** (`op` / `op.exe`) authenticated — only required if you pass `op://` references for credentials. The tool resolves any credential env var whose value starts with `op://` at startup. Plaintext credentials skip this.
 - SSH as `root` to the cluster nodes — needed **only** for the post-rollback `qm start` (the `pve` snapshot verbs do **not** do power operations). Single-VM parts need only `fsx-dev-pve22`; the bulk parts need all three: `fsx-dev-pve21`, `fsx-dev-pve22`, `fsx-dev-pve23`.
-- **Approval:** per project policy, snapshot operations on VMs other than **7303** require explicit approval. **8701 and 7305 are not on the no-approval list — obtain approval before executing the bulk parts (3 / 3B) against the live cluster.** (7303 itself needs no approval, but its pre-existing `bf_modulejail` snapshot must not be touched — see the preservation invariant above.)
+- **Approval:** per project policy, snapshot operations on VMs other than **7303** require explicit approval. **8701 and 7305 are not on the no-approval list — obtain approval before executing the bulk parts (3 / 3B) against the live cluster.**
 
 ---
 
@@ -343,10 +343,10 @@ Drives all four verbs against **three VMs on three different nodes** in a single
 
 **Command**:
 ```bash
-pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bf_modulejail|No snapshots'
+pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|No snapshots'
 ```
 
-**Expected**: All three VMs listed `Status: 🟢 running`. VM 7303 shows the **pre-existing** `bf_modulejail` snapshot — leave it untouched. 8701 and 7305 show no snapshots (after Parts 2/2B cleaned up).
+**Expected**: All three VMs listed `Status: 🟢 running`, each showing no user-created snapshots (after Parts 2/2B cleaned up).
 
 **Result**: ✅ *(to be observed)*
 
@@ -378,10 +378,10 @@ done
 
 **Command**:
 ```bash
-pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bulkdemo|bf_modulejail'
+pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bulkdemo'
 ```
 
-**Expected**: One `bulkdemo-*` snapshot per VM (`VM State: ❌ Not included (disk only)`); 7303 also still shows `bf_modulejail` (the new snapshot is its child).
+**Expected**: One `bulkdemo-*` snapshot per VM (`VM State: ❌ Not included (disk only)`).
 
 **Result**: ✅ *(to be observed)*
 
@@ -427,7 +427,7 @@ done
 
 ### Step 3.6: Bulk delete (per-VM, by exact name)
 
-Reuses the `SNAP` map from Step 3.2. Per-VM loop — do **NOT** use `--all` (see gotcha 6: `--all` is sequential, summary-less, and would destroy `bf_modulejail`).
+Reuses the `SNAP` map from Step 3.2. Per-VM loop — do **NOT** use `--all` (see gotcha 6: `--all` is sequential, summary-less, and would delete snapshots the runbook did not create).
 
 **Command**:
 ```bash
@@ -445,10 +445,10 @@ done
 
 **Command**:
 ```bash
-pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bulkdemo|bf_modulejail|No snapshots'
+pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bulkdemo|No snapshots'
 ```
 
-**Expected**: No `bulkdemo-*` snapshots anywhere. 8701 and 7305 show `No snapshots`. 7303 shows **only** `bf_modulejail` (preserved). All three VMs `🟢 running`.
+**Expected**: No `bulkdemo-*` snapshots anywhere. All three VMs show `No snapshots` and `🟢 running`.
 
 **Result**: ✅ *(to be observed)*
 
@@ -456,7 +456,7 @@ pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|bulkdemo|b
 
 ## Part 3B: Bulk Lifecycle by VM Name — VMs `fsx-dev-scraper01`, `fsx-dev-workstation03`, `fsx-dev-workstation05`
 
-Mirrors Part 3's bulk lifecycle but drives every command with **`--vmname`** (comma-separated names) instead of `--vmid`, validating name resolution across all three nodes through the full create → rollback → delete cycle. Uses a distinct prefix (`bulkvn`) so these never collide with Part 3's `bulkdemo-*`. VM 7303's pre-existing `bf_modulejail` must remain untouched.
+Mirrors Part 3's bulk lifecycle but drives every command with **`--vmname`** (comma-separated names) instead of `--vmid`, validating name resolution across all three nodes through the full create → rollback → delete cycle. Uses a distinct prefix (`bulkvn`) so these never collide with Part 3's `bulkdemo-*`.
 
 > **Note on names:** as in Part 3, generated names embed each VM's name and a per-VM timestamp, so rollback/delete operate **per-VM by exact name**. The capture and loops below resolve each VM by name.
 
@@ -466,10 +466,10 @@ Mirrors Part 3's bulk lifecycle but drives every command with **`--vmname`** (co
 ```bash
 pve vm snapshot list \
   --vmname fsx-dev-scraper01,fsx-dev-workstation03,fsx-dev-workstation05 \
-  2>&1 | grep -E 'VM [0-9]+:|bf_modulejail|No snapshots'
+  2>&1 | grep -E 'VM [0-9]+:|No snapshots'
 ```
 
-**Expected**: All three VMs `Status: 🟢 running`; 7303 shows the pre-existing `bf_modulejail`. Confirms the three names resolve to VMIDs 8701, 7303, 7305.
+**Expected**: All three VMs `Status: 🟢 running`, each with no user-created snapshots. Confirms the three names resolve to VMIDs 8701, 7303, 7305.
 
 **Result**: ✅ *(to be observed)*
 
@@ -505,10 +505,10 @@ done
 ```bash
 pve vm snapshot list \
   --vmname fsx-dev-scraper01,fsx-dev-workstation03,fsx-dev-workstation05 \
-  2>&1 | grep -E 'VM [0-9]+:|bulkvn|bf_modulejail'
+  2>&1 | grep -E 'VM [0-9]+:|bulkvn'
 ```
 
-**Expected**: One `bulkvn-*` snapshot per VM (disk-only); 7303 still shows `bf_modulejail`.
+**Expected**: One `bulkvn-*` snapshot per VM (disk-only).
 
 **Result**: ✅ *(to be observed)*
 
@@ -573,10 +573,10 @@ done
 ```bash
 pve vm snapshot list \
   --vmname fsx-dev-scraper01,fsx-dev-workstation03,fsx-dev-workstation05 \
-  2>&1 | grep -E 'VM [0-9]+:|bulkvn|bf_modulejail|No snapshots'
+  2>&1 | grep -E 'VM [0-9]+:|bulkvn|No snapshots'
 ```
 
-**Expected**: No `bulkvn-*` snapshots anywhere. 8701 and 7305 show `No snapshots`. 7303 shows **only** `bf_modulejail` (preserved). All three VMs `🟢 running`.
+**Expected**: No `bulkvn-*` snapshots anywhere. All three VMs show `No snapshots` and `🟢 running`.
 
 **Result**: ✅ *(to be observed)*
 
@@ -588,14 +588,14 @@ pve vm snapshot list \
 
 **Command**:
 ```bash
-pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|demo-fsx-dev-scraper01|vndemo-fsx-dev-scraper01|bulkdemo|bulkvn|bf_modulejail|No snapshots'
+pve vm snapshot list --vmid 8701,7303,7305 2>&1 | grep -E 'VM [0-9]+:|demo-fsx-dev-scraper01|vndemo-fsx-dev-scraper01|bulkdemo|bulkvn|No snapshots'
 for n in fsx-dev-pve21 fsx-dev-pve22 fsx-dev-pve23; do
   case $n in *pve21) id=7305;; *pve22) id=8701;; *pve23) id=7303;; esac
   echo "$n / $id: $(ssh -o ConnectTimeout=5 root@$n.fsx.zone "qm status $id")"
 done
 ```
 
-**Expected**: No `demo-*` / `vndemo-*` / `bulkdemo-*` / `bulkvn-*` snapshots anywhere. 8701 and 7305 show `No snapshots`. 7303 shows **only** `bf_modulejail` (pre-existing, preserved). All three VMs `running`.
+**Expected**: No `demo-*` / `vndemo-*` / `bulkdemo-*` / `bulkvn-*` snapshots anywhere. All three VMs show `No snapshots` and `running`.
 
 **Result**: ✅ *(to be observed)*
 
@@ -619,7 +619,6 @@ cd / && rm -rf /tmp/pve-release-test && ls -d /tmp/pve-release-test 2>&1 || echo
 | A `demo-*` / `vndemo-*` snapshot left behind on 8701 | `pve vm snapshot delete --vmid 8701 --snapshot '<exact-name>' -y` |
 | A `bulkdemo-*` / `bulkvn-*` snapshot left behind on 8701 / 7303 / 7305 | `pve vm snapshot delete --vmid <id> --snapshot '<exact-name>' -y` (per-VM) — **never** `--all` |
 | A VM left `stopped` after rollback | `ssh root@<node>.fsx.zone "qm start <vmid>"`, then confirm `qm status <vmid>` → running (node map: 8701→pve22, 7303→pve23, 7305→pve21) |
-| `bf_modulejail` on 7303 accidentally removed | **Stop.** This snapshot is not created by this runbook; recover from Proxmox backup (PBS) or escalate. Do not attempt to recreate it |
 | Bulk create shows `Successful: 2 (66.7%)` / one `Failed:` | One VM errored mid-batch (e.g. node unreachable, VM locked). The summary's `FAILED OPERATIONS:` block names the VM and cause; fix and re-run create for that single VM |
 | Third bulk VM appears to "hang" | It is not hung — concurrency cap is 2, so the 3rd VM starts only after one of the first two finishes. Wait for the `BULK OPERATION SUMMARY` block |
 | Credentials fail (`op` not signed in / 403) | Re-check 1Password auth (Step 0.2) and the token role on Proxmox; do **not** proceed past Step 2.1 until `list` works |
@@ -629,7 +628,7 @@ cd / && rm -rf /tmp/pve-release-test && ls -d /tmp/pve-release-test 2>&1 || echo
 | Rollback/delete fails `snapshot '...' not found` for **every** VM | The `SNAP`/`VNSNAP` map is empty or **stale** (left over from an earlier part in the same shell). Re-run the Step 2.2 / 2B.2 / 3.2 / 3B.2 capture block in the current shell and confirm non-empty names before retrying |
 | Generated name is missing the `-HHMM` suffix | Not a bug — names are truncated to 40 chars (`pkg/snapshot/operations.go` `maxSnapshotNameLength`); long VM names lose the suffix. Capture the exact name from `list`; never hardcode or assume the timestamp |
 
-This runbook is non-destructive by design: every snapshot it creates it also deletes, and rollbacks target snapshots taken seconds earlier (no real disk-state change). The only irreversible operation would be deleting a snapshot **not** created here — hence the explicit "do not touch `bf_modulejail`" and "never `--all`" callouts.
+This runbook is non-destructive by design: every snapshot it creates it also deletes, and rollbacks target snapshots taken seconds earlier (no real disk-state change). The only irreversible operation would be deleting a snapshot **not** created here — hence the "never `--all`" callout (Step 3.6 / 3B.6 delete by explicit per-VM name).
 
 ---
 
@@ -670,7 +669,7 @@ This runbook is non-destructive by design: every snapshot it creates it also del
 | 3B.5 | Post-rollback start (3) | ⬜ |
 | 3B.6 | Bulk delete (3) by `--vmname` | ⬜ |
 | 3B.7 | Verify clean (name) | ⬜ |
-| 4.1 | Final state clean (3 VMs, `bf_modulejail` intact) | ⬜ |
+| 4.1 | Final state clean (3 VMs, no test snapshots) | ⬜ |
 | 4.2 | Scratch dir removed | ⬜ |
 
 **Escalation**: If any step fails and the Cleanup & Recovery Plan does not resolve it, stop and seek approval before retrying destructive steps — VMs 8701 and 7305 are not on the project's no-approval testing list. Do not delete snapshots you did not create, and never use `--all` on delete.
