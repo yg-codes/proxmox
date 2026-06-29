@@ -155,9 +155,9 @@ go.mod           # Go module definition
 - PBS backup: `backup-pbs:backup/vm/7303/2025-08-05T12:16:44Z`
 
 ### Snapshot Naming Constraints
-- Maximum prefix length: 25 characters
+- Maximum snapshot **name** length: 40 characters (applied to the full assembled name `<prefix>-<vmname>-<timestamp>`, not to the prefix alone — there is no separate prefix-length limit)
 - Automatic invalid character cleanup
-- Intelligent timestamp appending
+- Intelligent timestamp appending (the `-YYYYMMDD-HHMM` suffix may be truncated for long VM names, since the 40-char cap applies to the whole name)
 - `vmstate` keyword detection for RAM inclusion
 
 ## Code Style
