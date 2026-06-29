@@ -816,7 +816,7 @@ Examples:
 
 ## Snapshot Naming
 
-- Maximum prefix length: 25 characters
-- Invalid characters are automatically cleaned
-- When using `--prefix`, a timestamp is appended automatically
+- Maximum snapshot **name** length: **40 characters**, applied to the full assembled name `<prefix>-<vmname>-<YYYYMMDD-HHMM>` (there is no separate limit on the `--prefix` input)
+- Invalid characters are automatically cleaned (replaced with `-`, runs collapsed, leading/trailing trimmed)
+- When using `--prefix`, a timestamp is appended automatically; for long VM names the `-YYYYMMDD-HHMM` suffix may be **truncated** because the 40-char cap applies to the whole name (e.g. `bulkdemo-fsx-dev-workstation03-20260626` — the `-HHMM` is cut)
 - The keyword `vmstate` in prefix or name enables RAM inclusion
